@@ -1,2 +1,19 @@
+# Dependencies
 node_modules/
+
+# Secrets: never commit these
 .env
+.env.*
+!.env.example
+*.pem
+*.ppk
+
+# Build output
+dist/
+build/
+coverage/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/

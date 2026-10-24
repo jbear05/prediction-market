@@ -6,6 +6,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const { seedMarkets } = require('./seedMarkets');
 
 const BCRYPT_ROUNDS = 12;
 const DEMO_PASSWORD = 'DemoPass123!'; // shared by every demo user (test data only)
@@ -22,7 +23,7 @@ const demoUsers = [
   { email: 'ethan.patel@example.com', displayName: 'EthanP', balance: 0, isVerified: true, lastDailyClaimAt: daysAgo(7) },
   { email: 'fatima.ali@example.com', displayName: 'FatimaAli', balance: 890, isVerified: true, lastDailyClaimAt: daysAgo(2) },
   { email: 'george.nguyen@example.com', displayName: 'GeorgeN', balance: 100, isVerified: false, lastDailyClaimAt: null },
-  { email: 'hannah.brooks@example.com', displayName: 'HannahB', balance: 210, isVerified: true, isBanned: true, lastDailyClaimAt: daysAgo(10) },
+  { email: 'hannah.brooks@example.com', displayName: 'HannahB', balance: 210, isVerified: true, lastDailyClaimAt: daysAgo(10) },
 ];
 
 function daysAgo(n) {
@@ -33,8 +34,10 @@ async function upsertUser(data, plainPassword) {
   const passwordHash = await bcrypt.hash(plainPassword, BCRYPT_ROUNDS);
   return User.findOneAndUpdate(
     { email: data.email },
-    { $set: { isBanned: false, ...data, passwordHash } },
-    { upsert: true, returnDocument: 'after', runValidators: true, setDefaultsOnInsert: true }
+    // $unset clears fields an older version of the schema stored. strict:false lets
+    // Mongoose send it, since those fields are no longer in models/User.js
+    { $set: { ...data, passwordHash }, $unset: { isBanned: 1, updatedAt: 1 } },
+    { upsert: true, returnDocument: 'after', runValidators: true, setDefaultsOnInsert: true, strict: false }
   );
 }
 
@@ -62,9 +65,11 @@ async function main() {
 
   const users = await User.find().sort({ role: 1, displayName: 1 }).lean();
   console.table(
-    users.map((u) => ({ email: u.email, displayName: u.displayName, role: u.role, balance: u.balance, verified: u.isVerified, banned: u.isBanned }))
+    users.map((u) => ({ email: u.email, displayName: u.displayName, role: u.role, balance: u.balance, verified: u.isVerified }))
   );
   console.log(`Done: ${users.length} users in ${mongoose.connection.name}.users`);
+
+  await seedMarkets();
 }
 
 main()

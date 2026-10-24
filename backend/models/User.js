@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Case-insensitive comparison
+// Case-insensitive comparison: "Alex" and "alex" count as the same name
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
 
 const userSchema = new mongoose.Schema(
@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: false },
-    isBanned: { type: Boolean, default: false },
     // Points, not money. Whole numbers only, and never negative
     balance: {
       type: Number,
@@ -37,7 +36,7 @@ const userSchema = new mongoose.Schema(
     },
     lastDailyClaimAt: { type: Date, default: null },
   },
-  { timestamps: true } // adds createdAt and updatedAt
+  { timestamps: { updatedAt: false } } // adds createdAt only
 );
 
 // Indexes
