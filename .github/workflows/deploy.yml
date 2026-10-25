@@ -1,0 +1,71 @@
+name: CI and deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    name: Deploy to EC2
+    needs: test
+    # Only after a merge/push to main, never for pull requests
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # One deploy at a time; a newer push waits instead of running alongside
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        if: hashFiles('frontend/package.json') != ''
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Built here instead of on the server, which only has 1 GB of memory
+      - name: Build the website
+        if: hashFiles('frontend/package.json') != ''
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          tar -czf "$RUNNER_TEMP/site.tgz" -C dist .
+
+      - name: Set up the SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # The server only lets this key run the deploy script. The website (if any) goes in on stdin.
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -f "$RUNNER_TEMP/site.tgz" ]; then SITE="$RUNNER_TEMP/site.tgz"; else SITE=/dev/null; fi
+          ssh -T -i ~/.ssh/deploy_key -o BatchMode=yes "deploy@$DEPLOY_HOST" < "$SITE"
