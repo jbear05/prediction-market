@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node scripts/seed.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "email:test": "node scripts/sendTestEmail.js"
   },
   "jest": {
     "testEnvironment": "node",
@@ -20,7 +21,8 @@
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
-    "mongoose": "^9.11.3"
+    "mongoose": "^9.11.3",
+    "nodemailer": "^10.2.1"
   },
   "devDependencies": {
     "jest": "^30.5.2",
