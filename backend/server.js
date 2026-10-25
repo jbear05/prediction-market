@@ -1,9 +1,24 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+
+// Browsers may call the API only from these sites. (The website itself is on the
+// same domain, and the Flutter app isn't a browser, so neither needs this; it's for
+// local frontend development and the SwaggerHub "Try it out" button.)
+app.use(
+  cors({
+    origin: [
+      'https://predictionmarketucf.site',
+      'https://www.predictionmarketucf.site',
+      'http://localhost:5173',
+      'https://app.swaggerhub.com',
+    ],
+  })
+);
 
 // confirms the API is up and whether MongoDB is connected
 app.get('/api/ping', (req, res) => {
