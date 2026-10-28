@@ -6,6 +6,7 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 app.use('/api/placeWager', require('./API/placeWager'));
+app.use('/api/resQuestion', require('./API/resolveQuestion'));
 
 // Browsers may call the API only from these sites. (The website itself is on the
 // same domain, and the Flutter app isn't a browser, so neither needs this; it's for
