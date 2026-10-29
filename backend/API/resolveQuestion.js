@@ -14,7 +14,12 @@ router.post('/', async (req, res, next) => {
       data: result
     });
   } catch (error) {
-    next(error);
+    res.status(400).json(
+        {
+            success: false,
+            error: error
+        }
+    )
   }
 });
 
