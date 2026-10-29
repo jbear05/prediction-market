@@ -233,8 +233,41 @@ async function searchReports({ reporterId, questionId, reason } = {}) {
   return Report.find(filter).sort({ createdAt: 1 });
 }
 
-module.exports = { searchReports };
+
+
+async function resolveReport({ uid, reportId, killQuestion }) {
+  const user = await User.findById(uid);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role !== 'admin') {
+    throw new Error('User is not Admin');
+  }
+
+  if (!mongoose.isValidObjectId(reportId)) {
+    throw new Error('Invalid report ID');
+  }
+
+  const report = await Report.findById(reportId);
+
+  if (!report) {
+    throw new Error('Report not found');
+  }
+
+  if (killQuestion) {
+    await cancelQuestion({questionId : report.questionId});
+  }
+
+  await report.deleteOne();
+
+  return { removed_Id: report._id };
+}
 
 
 
-module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion, searchReports, searchReportsWrapper };
+
+
+
+module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion, searchReports, searchReportsWrapper, resolveReport };
