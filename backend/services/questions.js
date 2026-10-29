@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Question = require('../models/Question');
 const Wager = require('../models/Wager');
+const Report = require('../models/Report');
 const Transaction = require('../models/Transaction');
 const { AppError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
@@ -181,4 +182,92 @@ async function searchQuestions({ q, category, status = 'open', sort = 'newest', 
   return { results, page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) };
 }
 
-module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex };
+async function reportQuestion({ reporterId,  questionId, reason})
+{
+  const report = await Report.create({reporterId, questionId, reason});
+  return {id : report._id};
+}
+
+async function searchReportsWrapper({ uid, reporterId, questionId, reason }) {
+  const user = await User.findById(uid);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role !== 'admin') {
+    throw new Error('User is not Admin');
+  }
+
+  return searchReports({ reporterId, questionId, reason });
+}
+
+async function searchReports({ reporterId, questionId, reason } = {}) {
+  const filter = {};
+
+  // Exact match for reporter ID
+  if (reporterId?.trim()) {
+    if (!mongoose.isValidObjectId(reporterId)) {
+      throw new Error('Invalid reporter ID');
+    }
+    filter.reporterId = reporterId;
+  }
+
+  // Exact match for question ID
+  if (questionId?.trim()) {
+    if (!mongoose.isValidObjectId(questionId)) {
+      throw new Error('Invalid question ID');
+    }
+    filter.questionId = questionId;
+  }
+
+  // Partial, case-insensitive match for reason
+  if (reason?.trim()) {
+    const escapedReason = reason.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+    filter.reason = { $regex: escapedReason, $options: 'i' };
+  }
+
+  return Report.find(filter).sort({ createdAt: 1 });
+}
+
+
+
+async function resolveReport({ uid, reportId, killQuestion }) {
+  const user = await User.findById(uid);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role !== 'admin') {
+    throw new Error('User is not Admin');
+  }
+
+  if (!mongoose.isValidObjectId(reportId)) {
+    throw new Error('Invalid report ID');
+  }
+
+  const report = await Report.findById(reportId);
+
+  if (!report) {
+    throw new Error('Report not found');
+  }
+
+  if (killQuestion) {
+    await cancelQuestion({questionId : report.questionId});
+  }
+
+  await report.deleteOne();
+
+  return { removed_Id: report._id };
+}
+
+
+
+
+
+
+module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion, searchReports, searchReportsWrapper, resolveReport };

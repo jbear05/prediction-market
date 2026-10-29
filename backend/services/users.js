@@ -15,7 +15,7 @@ const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
 // Gives the user their daily coins, at most once every 24 hours. The
 // lastDailyClaimAt condition lives inside the update itself, so two clicks at
 // the same moment can't both get paid.
-async function claimDaily(userId) {
+async function claimDaily({userId}) {
   if (!mongoose.isValidObjectId(userId)) {
     throw new AppError(400, 'INVALID_ID', 'Invalid user id');
   }
@@ -41,6 +41,7 @@ async function claimDaily(userId) {
     return { balance: user.balance, amount: DAILY_CLAIM_AMOUNT, nextClaimAt: new Date(now.getTime() + DAILY_CLAIM_INTERVAL_MS) };
   });
 }
+
 
 async function createUser({email, displayName, rawPassword})
 {

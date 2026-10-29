@@ -16,9 +16,14 @@ app.use('/api/newVerificationCode' , require("./API/ResendVerification.js"));
 
 //User action API
 app.use('/api/placeWager', require('./API/placeWager'));
+app.use('/api/claimDaily', require('./API/claimDaily'));
+app.use('/api/reportQuestion', require('./API/generateReport'));
+
 
 //admin action API
 app.use('/api/resQuestion', require('./API/resolveQuestion'));
+app.use('/api/findReport', require('./API/findReport'));
+app.use('/api/reviewReport', require('./API/finishReport'));
 
 // Browsers may call the API only from these sites. (The website itself is on the
 // same domain, and the Flutter app isn't a browser, so neither needs this; it's for
