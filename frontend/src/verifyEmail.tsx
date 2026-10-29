@@ -1,7 +1,9 @@
+import { useState } from "react";
 import "./auth.css";
 
 // displays email verification form
 export default function VerifyEmail() {
+  const [code, setCode] = useState("");
   return (
     <main className="auth-page">
       {/* page title and verification instructions */}
@@ -26,6 +28,8 @@ export default function VerifyEmail() {
           pattern="[0-9]{6}"
           maxLength={6}
           required
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
         />
 
         <button className="auth-submit" type="submit">
