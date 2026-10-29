@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Question = require('../models/Question');
 const Wager = require('../models/Wager');
+const Report = require('../models/Report');
 const Transaction = require('../models/Transaction');
 const { AppError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
@@ -181,4 +182,11 @@ async function searchQuestions({ q, category, status = 'open', sort = 'newest', 
   return { results, page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) };
 }
 
-module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex };
+async function reportQuestion({ reporterId,  questionId, reason})
+{
+  const report = await Report.create({reporterId, questionId, reason});
+  return {id : report._id};
+}
+
+
+module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion };
