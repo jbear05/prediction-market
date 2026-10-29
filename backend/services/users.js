@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { AppError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const DAILY_CLAIM_AMOUNT = 100;
 const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -36,5 +38,26 @@ async function claimDaily(userId) {
     return { balance: user.balance, amount: DAILY_CLAIM_AMOUNT, nextClaimAt: new Date(now.getTime() + DAILY_CLAIM_INTERVAL_MS) };
   });
 }
+
+async function createUser({email, displayName, rawPassword})
+{
+  //Verify with jair that this correctly hashes
+  const user = await User.create({email, balance: 100, displayName, isVerified: false, lastDailyClaimAt:null, passwordHash: await bcrypt.hash(rawPassword, 10), role:"user"});
+  await createAuthCode(user._id, "Account Creation");
+  return {uid: user._id};
+}
+
+async function login({email, rawPassword})
+{
+
+  const user = await User.findOne({email}).select('+passwordHash');
+  if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash)))
+  {
+    throw new Error('Invalid Email or password')
+  }
+
+  return {uid: user._id, needVerification: !user.isVerified };
+}
+
 
 module.exports = { claimDaily, DAILY_CLAIM_AMOUNT, DAILY_CLAIM_INTERVAL_MS };
