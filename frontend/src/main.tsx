@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import ResetPassword from "./resetPassword";
+import Login from "./login";
+import Register from "./register";
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
@@ -9,6 +11,6 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ResetPassword />
+    <Register />
   </StrictMode>,
 );
