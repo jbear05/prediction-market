@@ -16,6 +16,8 @@ app.use('/api/newVerificationCode' , require("./API/ResendVerification.js"));
 
 //User action API
 app.use('/api/placeWager', require('./API/placeWager'));
+app.use('/api/claimDaily', require('./API/claimDaily'));
+
 
 //admin action API
 app.use('/api/resQuestion', require('./API/resolveQuestion'));
