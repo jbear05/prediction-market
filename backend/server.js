@@ -12,7 +12,7 @@ app.use('/api/login', require('./API/login.js'));
 app.use('/api/getpasswordCode' , require("./API/resetPassword.js"));
 app.use('/api/passwordReset' , require("./API/updatePassword.js"));
 app.use('/api/verifyUser' , require("./API/verifyUser.js"));
-app.use('/api/newVerificationCode' , require("./API/ResendVerification.js"));
+app.use('/api/newVerificationCode' , require("./API/resendVerification.js"));
 
 //User action API
 app.use('/api/placeWager', require('./API/placeWager'));
