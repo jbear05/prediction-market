@@ -5,6 +5,12 @@ const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+
+//account management API
+app.use('/api/registerUser', require('./API/registerUser.js'));
+app.use('/api/login', require('./API/login.js'));
+
+//Question Related API
 app.use('/api/placeWager', require('./API/placeWager'));
 app.use('/api/resQuestion', require('./API/resolveQuestion'));
 

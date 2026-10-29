@@ -5,6 +5,8 @@ const { AppError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const mailer = require('./mailer.js');
+const {createAuthCode} = require('./authCodes.js');
 
 const DAILY_CLAIM_AMOUNT = 100;
 const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -41,10 +43,15 @@ async function claimDaily(userId) {
 
 async function createUser({email, displayName, rawPassword})
 {
-  //Verify with jair that this correctly hashes
+  
   const user = await User.create({email, balance: 100, displayName, isVerified: false, lastDailyClaimAt:null, passwordHash: await bcrypt.hash(rawPassword, 10), role:"user"});
-  await createAuthCode(user._id, "Account Creation");
+  const authcode = await createAuthCode(user._id, "verify");
+  mailer.sendVerificationCode(user.email, authcode);
+
   return {uid: user._id};
+  
+  
+  
 }
 
 async function login({email, rawPassword})
@@ -59,5 +66,12 @@ async function login({email, rawPassword})
   return {uid: user._id, needVerification: !user.isVerified };
 }
 
+async function pwReset({email})
+{
+  const user = await User.findOne({email});
+  const authcode = await createAuthCode(user._id, "reset");
+  mailer.sendVerificationCode(user.email, authcode);
+  return {success: true};
+}
 
-module.exports = { claimDaily, DAILY_CLAIM_AMOUNT, DAILY_CLAIM_INTERVAL_MS };
+module.exports = {claimDaily, createUser,  login,  pwReset,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS};
