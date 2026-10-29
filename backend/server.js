@@ -9,9 +9,15 @@ app.use(express.json());
 //account management API
 app.use('/api/registerUser', require('./API/registerUser.js'));
 app.use('/api/login', require('./API/login.js'));
+app.use('/api/getpasswordCode' , require("./API/resetPassword.js"));
+app.use('/api/passwordReset' , require("./API/updatePassword.js"));
+app.use('/api/verifyUser' , require("./API/verifyUser.js"));
+app.use('/api/newVerificationCode' , require("./API/ResendVerification.js"));
 
-//Question Related API
+//User action API
 app.use('/api/placeWager', require('./API/placeWager'));
+
+//admin action API
 app.use('/api/resQuestion', require('./API/resolveQuestion'));
 
 // Browsers may call the API only from these sites. (The website itself is on the

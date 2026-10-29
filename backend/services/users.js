@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const mailer = require('./mailer.js');
 const {createAuthCode} = require('./authCodes.js');
+const {verifyAuthCode} = require('./authCodes.js');
 
 const DAILY_CLAIM_AMOUNT = 100;
 const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -66,12 +67,45 @@ async function login({email, rawPassword})
   return {uid: user._id, needVerification: !user.isVerified };
 }
 
-async function pwReset({email})
+async function passwordResetCode({email})
 {
   const user = await User.findOne({email});
   const authcode = await createAuthCode(user._id, "reset");
-  mailer.sendVerificationCode(user.email, authcode);
+  mailer.sendPasswordResetCode(user.email, authcode);
   return {success: true};
 }
 
-module.exports = {claimDaily, createUser,  login,  pwReset,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS};
+async function finishPasswordReset({email, newPassword, authCode})
+{
+  const user = await User.findOne({email});
+  if(await verifyAuthCode(user._id, "reset" ,authCode ))
+  {
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    return {success : true};
+  }
+  return {success : false};
+}
+
+async function verifyUser({uid, authCode})
+{
+  const user = await User.findOne({_id : uid});
+  if(await verifyAuthCode(user._id, "verify" ,authCode ))
+  {
+    user.isVerified = true;
+    await user.save();
+    return {success : true};
+  }
+  return {success : false};
+}
+
+async function NewVerCode({uid})
+{
+  const user = await User.findOne({_id: uid});
+  const authcode = await createAuthCode(user._id, "verify");
+  mailer.sendVerificationCode(user.email, authcode);
+  return {uid: user._id};
+}
+
+
+module.exports = {claimDaily, createUser,  login,  passwordResetCode, finishPasswordReset, verifyUser, NewVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS};
