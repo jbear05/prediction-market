@@ -22,6 +22,7 @@ app.use('/api/reportQuestion', require('./API/generateReport'));
 
 //admin action API
 app.use('/api/resQuestion', require('./API/resolveQuestion'));
+app.use('/api/findReport', require('./API/findReport'));
 
 // Browsers may call the API only from these sites. (The website itself is on the
 // same domain, and the Flutter app isn't a browser, so neither needs this; it's for

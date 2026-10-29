@@ -188,5 +188,53 @@ async function reportQuestion({ reporterId,  questionId, reason})
   return {id : report._id};
 }
 
+async function searchReportsWrapper({ uid, reporterId, questionId, reason }) {
+  const user = await User.findById(uid);
 
-module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion };
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role !== 'admin') {
+    throw new Error('User is not Admin');
+  }
+
+  return searchReports({ reporterId, questionId, reason });
+}
+
+async function searchReports({ reporterId, questionId, reason } = {}) {
+  const filter = {};
+
+  // Exact match for reporter ID
+  if (reporterId?.trim()) {
+    if (!mongoose.isValidObjectId(reporterId)) {
+      throw new Error('Invalid reporter ID');
+    }
+    filter.reporterId = reporterId;
+  }
+
+  // Exact match for question ID
+  if (questionId?.trim()) {
+    if (!mongoose.isValidObjectId(questionId)) {
+      throw new Error('Invalid question ID');
+    }
+    filter.questionId = questionId;
+  }
+
+  // Partial, case-insensitive match for reason
+  if (reason?.trim()) {
+    const escapedReason = reason.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+    filter.reason = { $regex: escapedReason, $options: 'i' };
+  }
+
+  return Report.find(filter).sort({ createdAt: 1 });
+}
+
+module.exports = { searchReports };
+
+
+
+module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion, searchReports, searchReportsWrapper };
