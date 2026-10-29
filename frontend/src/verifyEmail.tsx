@@ -1,11 +1,21 @@
+import "./auth.css";
+
+// displays email verification form
 export default function VerifyEmail() {
   return (
-    <main>
-      <h1>Prediction Market</h1>
-      <h2>Verify your email</h2>
-      <p>Enter the 6-digit code sent to your email.</p>
-      
-      <form onSubmit={(event) => event.preventDefault()}>
+    <main className="auth-page">
+      {/* page title and verification instructions */}
+      <h1 className="auth-title">Prediction Market</h1>
+      <h2 className="auth-heading">Verify your email</h2>
+      <p className="auth-description">
+        Enter the 6-digit code sent to your email.
+      </p>
+
+      {/* prevent page reload until API implemented */}
+      <form
+        className="auth-form"
+        onSubmit={(event) => event.preventDefault()}
+      >
         <label htmlFor="verification-code">Verification code</label>
         <input
           id="verification-code"
@@ -18,12 +28,16 @@ export default function VerifyEmail() {
           required
         />
 
-        <button type="submit">Verify Email</button>
+        <button className="auth-submit" type="submit">
+          Verify Email
+        </button>
       </form>
-
-      <p>
+      {/* API will be added later */}
+      <p className="auth-footer">
         Didn’t receive a code?{" "}
-        <button type="button">Resend code</button>
+        <button className="auth-link" type="button">
+          Resend code
+        </button>
       </p>
     </main>
   );
