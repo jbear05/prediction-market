@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router";
+import { register } from "./authAPI";
 import "./auth.css";
 
 // same rules as displayName in backend/models/User.js
@@ -15,8 +17,12 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState("");
+  // true while waiting on the server, so one click can't create two accounts
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const navigate = useNavigate();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!DISPLAY_NAME_PATTERN.test(displayName)) {
@@ -37,7 +43,22 @@ export default function Register() {
     }
 
     setError("");
-    // connect register API here, then send the user to /verify-email
+    setSubmitting(true);
+
+    try {
+      const result = await register(email, displayName, password);
+
+      // the verification code was emailed; that page needs the uid to check it
+      navigate(`/verify-email?uid=${result.uid}`);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create your account. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -45,7 +66,6 @@ export default function Register() {
       <h1 className="auth-title">Prediction Market</h1>
       <h2 className="auth-heading">Create an account</h2>
 
-      {/* API added later */}
       <form className="auth-form" onSubmit={handleSubmit}>
         <label htmlFor="register-email">Email</label>
         <input
@@ -102,17 +122,16 @@ export default function Register() {
           </p>
         )}
 
-        <button className="auth-submit" type="submit">
-          Create Account
+        <button className="auth-submit" type="submit" disabled={submitting}>
+          {submitting ? "Creating account…" : "Create Account"}
         </button>
       </form>
 
-      {/* swap <a> for react-router's <Link> once routing is added */}
       <p className="auth-footer">
         Already have an account?{" "}
-        <a className="auth-link" href="/login">
+        <Link className="auth-link" to="/login">
           Log in
-        </a>
+        </Link>
       </p>
     </main>
   );

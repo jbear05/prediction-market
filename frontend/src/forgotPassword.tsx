@@ -1,25 +1,26 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { requestPasswordResetCode } from "./authAPI";
+import { useNavigate } from "react-router";
 import "./auth.css";
 
 // displays password-reset email form
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate();
+  
   // request password reset code for the entered email
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setMessage("");
     setIsLoading(true);
 
     try {
-      await requestPasswordResetCode(email.trim());
-      setMessage("A reset code was requested. Please check your email.");
+      const submittedEmail = email.trim();
+      await requestPasswordResetCode(submittedEmail);
+      navigate(`/reset-password?email=${encodeURIComponent(submittedEmail)}`);
     } catch (error) {
       setError(
         error instanceof Error
@@ -68,11 +69,6 @@ export default function ForgotPassword() {
           {isLoading ? "Requesting..." : "Send reset code"}
         </button>
       </form>
-      {message && (
-        <p className="auth-footer" role="status">
-          {message}
-        </p>
-      )}
     </main>
   );
 }
