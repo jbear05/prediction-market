@@ -1,9 +1,35 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
+import { requestPasswordResetCode } from "./authAPI";
 import "./auth.css";
 
 // displays password-reset email form
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // request password reset code for the entered email
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      await requestPasswordResetCode(email.trim());
+      setMessage("A reset code was requested. Please check your email.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to request a reset code. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <main className="auth-page">
@@ -14,10 +40,9 @@ export default function ForgotPassword() {
         Enter your account email to request a password-reset code.
       </p>
 
-      {/* API will be added later */}
       <form
         className="auth-form"
-        onSubmit={(event) => event.preventDefault()}
+        onSubmit={handleSubmit}
       >
         <label htmlFor="reset-email">Email</label>
         <input
@@ -30,10 +55,24 @@ export default function ForgotPassword() {
           onChange={(event) => setEmail(event.target.value)}
         />
 
-        <button className="auth-submit" type="submit">
-          Send reset code
+        {error && (
+          <p className="auth-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button 
+          className="auth-submit" 
+          type="submit"
+          disabled={isLoading}
+        >
+          {isLoading ? "Requesting..." : "Send reset code"}
         </button>
       </form>
+      {message && (
+        <p className="auth-footer" role="status">
+          {message}
+        </p>
+      )}
     </main>
   );
 }
