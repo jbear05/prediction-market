@@ -4,8 +4,8 @@ const router = express.Router();
 const { reportQuestion } = require('../services/questions');
 const { AppError } = require('../services/errors');
 
-// POST /api/questions/:questionId/generateReport
-router.post('/:questionId/generateReport', async (req, res, next) => {
+// POST /api/questions/:questionId/report
+router.post('/:questionId/report', async (req, res, next) => {
   try {
     const result = await reportQuestion({
       reporterId: req.body.reporterId,
