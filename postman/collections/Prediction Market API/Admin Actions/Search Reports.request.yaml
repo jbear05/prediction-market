@@ -1,6 +1,6 @@
 $kind: http-request
 method: GET
-url: '{{baseUrl}}/api/reports/search?reporterId={{reporterId}}&questionId={{questionId}}&reason={{reason}}'
+url: '{{baseUrl}}/api/reports?reporterId={{reporterId}}&questionId={{questionId}}&reason={{reason}}'
 order: 3000
 queryParams:
   - key: reporterId
