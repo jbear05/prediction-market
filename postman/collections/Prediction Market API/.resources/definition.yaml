@@ -1,0 +1,3 @@
+$kind: collection
+name: Prediction Market API
+description: API collection for the Prediction Market app — account management, user actions, and admin actions.

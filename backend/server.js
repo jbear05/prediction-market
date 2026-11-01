@@ -17,11 +17,11 @@ app.use('/api/newVerificationCode' , require("./API/resendVerification.js"));
 //User action API
 app.use('/api/placeWager', require('./API/placeWager'));
 app.use('/api/claimDaily', require('./API/claimDaily'));
-app.use('/api/reportQuestion', require('./API/generateReport'));
-
+app.use('/api/questions', require('./API/generateReport'));
 
 //admin action API
-app.use('/api/resQuestion', require('./API/resolveQuestion'));
+app.use('/api/questions', require('./API/resolveQuestion'));
+app.use('/api/questions', require('./API/cancelQuestion'));
 app.use('/api/findReport', require('./API/findReport'));
 app.use('/api/reviewReport', require('./API/finishReport'));
 

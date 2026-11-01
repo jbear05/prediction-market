@@ -1,0 +1,12 @@
+$kind: http-request
+method: POST
+url: "{{baseUrl}}/api/questions/{{questionId}}/resolve"
+order: 1000
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "outcome": "yes"
+    }

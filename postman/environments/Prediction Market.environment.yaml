@@ -1,0 +1,10 @@
+name: Prediction Market
+values:
+  - key: baseUrl
+    value: ''
+  - key: questionId
+    value: ''
+  - key: userId
+    value: ''
+  - key: adminId
+    value: ''
