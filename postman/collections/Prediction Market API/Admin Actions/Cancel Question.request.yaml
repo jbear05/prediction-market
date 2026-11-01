@@ -7,3 +7,8 @@ body:
 order: 2000
 pathVariables:
   questionId: "{{questionId}}"
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

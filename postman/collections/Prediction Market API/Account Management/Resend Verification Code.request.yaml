@@ -1,6 +1,6 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/newVerificationCode'
+url: '{{baseUrl}}/api/verify/resend'
 order: 4000
 headers:
   - key: Content-Type
@@ -9,5 +9,5 @@ body:
   type: json
   content: |-
     {
-      "uid": "{{userId}}"
+      "email": "user@example.com"
     }

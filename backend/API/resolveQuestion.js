@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const { resolveQuestion } = require('../services/questions');
 const { AppError } = require('../services/errors');
 
@@ -20,9 +19,7 @@ router.post('/:questionId/resolve', async (req, res, next) => {
         message: error.message
       });
     }
-    else {
-      next(error);
-    }
+    next(error);
   }
 });
 

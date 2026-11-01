@@ -182,14 +182,13 @@ async function searchQuestions({ q, category, status = 'open', sort = 'newest', 
   return { results, page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) };
 }
 
-async function reportQuestion({ reporterId,  questionId, reason})
-{
-  const report = await Report.create({reporterId, questionId, reason});
-  return {id : report._id};
+async function reportQuestion({ reporterId,  questionId, reason }) {
+  const report = await Report.create({ reporterId, questionId, reason });
+  return { id : report._id };
 }
 
-async function searchReportsWrapper({ uid, reporterId, questionId, reason }) {
-  const user = await User.findById(uid);
+async function searchReportsWrapper({ userId, reporterId, questionId, reason }) {
+  const user = await User.findById(userId);
 
   if (!user) {
     throw new Error('User not found');
@@ -235,8 +234,8 @@ async function searchReports({ reporterId, questionId, reason } = {}) {
 
 
 
-async function resolveReport({ uid, reportId, killQuestion }) {
-  const user = await User.findById(uid);
+async function resolveReport({ userId, reportId, killQuestion }) {
+  const user = await User.findById(userId);
 
   if (!user) {
     throw new Error('User not found');
@@ -257,12 +256,12 @@ async function resolveReport({ uid, reportId, killQuestion }) {
   }
 
   if (killQuestion) {
-    await cancelQuestion({questionId : report.questionId});
+    await cancelQuestion({ questionId : report.questionId });
   }
 
   await report.deleteOne();
 
-  return { removed_Id: report._id };
+  return { removedId: report._id };
 }
 
 

@@ -8,11 +8,11 @@ const { AppError } = require('../services/errors');
 router.post('/:questionId/report', async (req, res, next) => {
   try {
     const result = await reportQuestion({
-      reporterId: req.body.reporterId,
+      reporterId: req.user.id,
       questionId: req.params.questionId,
       reason: req.body.reason
     });
-    res.status(200).json(result);
+    res.status(201).json(result); // HTTP Code 201: Created
   }
   catch (error) {
     if (error instanceof AppError) {
@@ -21,9 +21,7 @@ router.post('/:questionId/report', async (req, res, next) => {
         message: error.message
       });
     }
-    else {
-      next(error);
-    }
+    next(error);
   }
 });
 

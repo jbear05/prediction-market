@@ -1,6 +1,6 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/placeWager'
+url: '{{baseUrl}}/api/questions/{{questionId}}/place-wager'
 order: 1000
 headers:
   - key: Content-Type
@@ -9,8 +9,13 @@ body:
   type: json
   content: |-
     {
-      "userId": "{{userId}}",
-      "questionId": "{{questionId}}",
       "side": "yes",
       "amount": 50
     }
+pathVariables:
+  questionId: '{{questionId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

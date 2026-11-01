@@ -6,8 +6,8 @@ const { withTransaction } = require('./withTransaction');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const mailer = require('./mailer.js');
-const {createAuthCode} = require('./authCodes.js');
-const {verifyAuthCode} = require('./authCodes.js');
+const { createAuthCode } = require('./authCodes.js');
+const { verifyAuthCode } = require('./authCodes.js');
 
 const DAILY_CLAIM_AMOUNT = 100;
 const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -15,7 +15,7 @@ const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
 // Gives the user their daily coins, at most once every 24 hours. The
 // lastDailyClaimAt condition lives inside the update itself, so two clicks at
 // the same moment can't both get paid.
-async function claimDaily({userId}) {
+async function claimDaily({ userId }) {
   if (!mongoose.isValidObjectId(userId)) {
     throw new AppError(400, 'INVALID_ID', 'Invalid user id');
   }
@@ -38,75 +38,70 @@ async function claimDaily({userId}) {
     }
 
     await Transaction.create([{ userId, type: 'daily_claim', amount: DAILY_CLAIM_AMOUNT }], { session });
-    return { balance: user.balance, amount: DAILY_CLAIM_AMOUNT, nextClaimAt: new Date(now.getTime() + DAILY_CLAIM_INTERVAL_MS) };
+    return {
+      balance: user.balance, amount: DAILY_CLAIM_AMOUNT, 
+      nextClaimAt: new Date(now.getTime() + DAILY_CLAIM_INTERVAL_MS)
+    };
   });
 }
 
-
-async function createUser({email, displayName, rawPassword})
-{
-  
-  const user = await User.create({email, balance: 100, displayName, isVerified: false, lastDailyClaimAt:null, passwordHash: await bcrypt.hash(rawPassword, 10), role:"user"});
+async function createUser({ email, displayName, rawPassword }) {
+  const user = await User.create({
+    email, balance: 100, displayName, isVerified: false, lastDailyClaimAt:null,
+    passwordHash: await bcrypt.hash(rawPassword, 10), role:"user" 
+  });
   const authcode = await createAuthCode(user._id, "verify");
-  mailer.sendVerificationCode(user.email, authcode);
-
-  return {uid: user._id};
-  
-  
-  
+  await mailer.sendVerificationCode(user.email, authcode);
+  return { userId: user._id };
 }
 
-async function login({email, rawPassword})
-{
-
-  const user = await User.findOne({email}).select('+passwordHash');
-  if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash)))
-  {
+async function login({ email, rawPassword }) {
+  const user = await User.findOne({ email }).select('+passwordHash');
+  if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash))) {
     throw new Error('Invalid Email or password')
   }
-
-  return {uid: user._id, needVerification: !user.isVerified };
+  return { userId: user._id, needVerification: !user.isVerified };
 }
 
-async function passwordResetCode({email})
-{
-  const user = await User.findOne({email});
-  const authcode = await createAuthCode(user._id, "reset");
-  mailer.sendPasswordResetCode(user.email, authcode);
-  return {success: true};
+async function passwordResetCode({ email }) {
+  const user = await User.findOne({ email });
+  if (user) {
+    const authcode = await createAuthCode(user._id, "reset");
+    await mailer.sendPasswordResetCode(user.email, authcode);
+  }
+  return { success: true };
 }
 
-async function finishPasswordReset({email, newPassword, authCode})
-{
-  const user = await User.findOne({email});
-  if(await verifyAuthCode(user._id, "reset" ,authCode ))
-  {
+async function finishPasswordReset({ email, newPassword, authCode }) {
+  const user = await User.findOne({ email });
+  if (user && await verifyAuthCode(user._id, "reset" ,authCode)) {
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await user.save();
-    return {success : true};
+    return { success : true };
   }
-  return {success : false};
+  return { success : false };
 }
 
-async function verifyUser({uid, authCode})
-{
-  const user = await User.findOne({_id : uid});
-  if(await verifyAuthCode(user._id, "verify" ,authCode ))
-  {
+async function verifyUser({ email, authCode }) {
+  const user = await User.findOne({ email });
+  if (user && await verifyAuthCode(user._id, "verify", authCode )) {
     user.isVerified = true;
     await user.save();
-    return {success : true};
+    return { success : true };
   }
-  return {success : false};
+  return { success : false };
 }
 
-async function NewVerCode({uid})
-{
-  const user = await User.findOne({_id: uid});
-  const authcode = await createAuthCode(user._id, "verify");
-  mailer.sendVerificationCode(user.email, authcode);
-  return {uid: user._id};
+async function newVerCode({ email }) {
+  const user = await User.findOne({ email });
+  if (user) {
+    const authcode = await createAuthCode(user._id, "verify");
+    await mailer.sendVerificationCode(user.email, authcode);
+  }
+  return { success : true };
 }
 
-
-module.exports = {claimDaily, createUser,  login,  passwordResetCode, finishPasswordReset, verifyUser, NewVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS};
+module.exports = {
+  claimDaily, createUser,  login,  passwordResetCode, finishPasswordReset,
+  verifyUser, newVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS
+};

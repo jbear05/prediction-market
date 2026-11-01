@@ -4,23 +4,22 @@ const router = express.Router();
 const { passwordResetCode } = require('../services/users');
 const { AppError } = require('../services/errors');
 
-// POST /api/passwordCode
-router.post('/', async (req, res, next) => {
+// POST /api/password/reset
+router.post('/reset', async (req, res, next) => {
   try {
-    const result = await passwordResetCode(req.body);
-
-    res.status(201).json({
-      success: true,
-      data: result
+    const result = await passwordResetCode({
+      email: req.body.email
     });
-  } catch (error) {
-    
-    res.status(400).json(
-        {
-            success: false,
-            error: error
-        }
-    )
+    res.status(200).json(result);
+  }
+  catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message
+      });
+    }
+    next(error);
   }
 });
 

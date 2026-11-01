@@ -8,3 +8,24 @@ values:
     value: ''
   - key: adminId
     value: ''
+  - key: reporterId
+    value: ''
+  - key: reason
+    value: ''
+  - key: reportId
+    value: ''
+  - key: jwt
+    value: ''
+    enabled: true
+    type: secret
+    description: JWT saved automatically by the Login request
+  - key: adminEmail
+    value: ''
+    enabled: true
+    type: secret
+    description: Admin account email used by the Login request
+  - key: adminPassword
+    value: ''
+    enabled: true
+    type: secret
+    description: Admin account password used by the Login request

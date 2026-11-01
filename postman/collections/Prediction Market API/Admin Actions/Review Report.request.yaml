@@ -1,15 +1,17 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/reviewReport'
+url: '{{baseUrl}}/api/reports/{{reportId}}/resolve'
 order: 4000
-headers:
-  - key: Content-Type
-    value: application/json
 body:
   type: json
   content: |-
     {
-      "uid": "{{userId}}",
-      "reportId": "{{reportId}}",
       "killQuestion": false
     }
+pathVariables:
+  reportId: '{{reportId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

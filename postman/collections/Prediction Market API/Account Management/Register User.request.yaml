@@ -1,6 +1,6 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/registerUser'
+url: '{{baseUrl}}/api/register'
 order: 1000
 headers:
   - key: Content-Type

@@ -1,6 +1,6 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/questions/{{questionId}}/generateReport'
+url: '{{baseUrl}}/api/questions/{{questionId}}/report'
 order: 3000
 headers:
   - key: Content-Type
@@ -9,6 +9,12 @@ body:
   type: json
   content: |-
     {
-      "reporterId": "{{userId}}",
       "reason": "This question is inappropriate."
     }
+pathVariables:
+  questionId: '{{questionId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

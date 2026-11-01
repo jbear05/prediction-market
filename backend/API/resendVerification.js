@@ -1,28 +1,25 @@
 const express = require('express');
 const router = express.Router();
 
-const { NewVerCode } = require('../services/users');
+const { newVerCode } = require('../services/users');
 const { AppError } = require('../services/errors');
 
-// POST /api/newVerificationCode
-router.post('/', async (req, res, next) => {
+// POST /api/verify/resend
+router.post('/resend', async (req, res, next) => {
   try {
-    const result = await NewVerCode(req.body);
-
-    res.status(201).json({
-      success: true,
-      data: result
+    const result = await newVerCode({
+      email: req.body.email
     });
-  } catch (error) {
-    
-    
-    res.status(400).json(
-        {
-    
-            success: false,
-            error: error
-        }
-    )
+    res.status(200).json(result);
+  }
+  catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message
+      });
+    }
+    next(error);
   }
 });
 

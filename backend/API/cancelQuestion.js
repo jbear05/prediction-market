@@ -7,7 +7,9 @@ const { AppError } = require('../services/errors');
 // POST /api/questions/:questionId/cancel
 router.post('/:questionId/cancel', async (req, res, next) => {
     try {
-        const result = await cancelQuestion(req.params);
+        const result = await cancelQuestion({
+            questionId: req.params.questionId
+        });
         res.status(200).json(result);
     }
     catch (error) {
@@ -17,9 +19,7 @@ router.post('/:questionId/cancel', async (req, res, next) => {
                 message: error.message
             });
         }
-        else {
-            next(error);
-        }
+        next(error);
     }
 });
 

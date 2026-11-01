@@ -2,28 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
+const requireAuth = require('./middleware/requireAuth');
 const app = express();
 app.use(express.json());
-
-//account management API
-app.use('/api/registerUser', require('./API/registerUser.js'));
-app.use('/api/login', require('./API/login.js'));
-app.use('/api/getpasswordCode' , require("./API/resetPassword.js"));
-app.use('/api/passwordReset' , require("./API/updatePassword.js"));
-app.use('/api/verifyUser' , require("./API/verifyUser.js"));
-app.use('/api/newVerificationCode' , require("./API/resendVerification.js"));
-
-//User action API
-app.use('/api/placeWager', require('./API/placeWager'));
-app.use('/api/claimDaily', require('./API/claimDaily'));
-app.use('/api/questions', require('./API/generateReport'));
-
-//admin action API
-app.use('/api/questions', require('./API/resolveQuestion'));
-app.use('/api/questions', require('./API/cancelQuestion'));
-app.use('/api/findReport', require('./API/findReport'));
-app.use('/api/reviewReport', require('./API/finishReport'));
 
 // Browsers may call the API only from these sites. (The website itself is on the
 // same domain, and the Flutter app isn't a browser, so neither needs this; it's for
@@ -39,7 +20,31 @@ app.use(
   })
 );
 
-// confirms the API is up and whether MongoDB is connected
+// Enforce that JWT is checked with middleware
+app.use('/api/daily-claim', requireAuth);
+app.use('/api/questions', requireAuth);
+app.use('/api/reports', requireAuth);
+
+// Account management API
+app.use('/api/register', require('./API/registerUser.js'));
+app.use('/api/login', require('./API/login.js'));
+app.use('/api/password', require("./API/resetPassword.js"));
+app.use('/api/password', require("./API/updatePassword.js"));
+app.use('/api/verify', require("./API/verifyUser.js"));
+app.use('/api/verify', require("./API/resendVerification.js"));
+
+// User action API
+app.use('/api/daily-claim', require('./API/dailyClaim.js'));
+app.use('/api/questions', require('./API/placeWager'));
+app.use('/api/questions', require('./API/reportQuestion.js'));
+
+// Admin action API
+app.use('/api/questions', require('./API/resolveQuestion'));
+app.use('/api/questions', require('./API/cancelQuestion'));
+app.use('/api/reports', require('./API/searchReport.js'));
+app.use('/api/reports', require('./API/resolveReport.js'));
+
+// Confirms the API is up and whether MongoDB is connected
 app.get('/api/ping', (req, res) => {
   const connected = mongoose.connection.readyState === 1;
   res.json({ ok: true, db: connected ? 'connected' : 'disconnected' });

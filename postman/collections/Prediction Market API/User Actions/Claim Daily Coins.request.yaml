@@ -1,13 +1,9 @@
 $kind: http-request
 method: POST
-url: '{{baseUrl}}/api/claimDaily'
+url: '{{baseUrl}}/api/daily-claim'
 order: 2000
-headers:
-  - key: Content-Type
-    value: application/json
-body:
-  type: json
-  content: |-
-    {
-      "userId": "{{userId}}"
-    }
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

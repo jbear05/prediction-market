@@ -8,6 +8,25 @@ body:
   type: json
   content: |-
     {
-      "email": "admin@example.com",
-      "rawPassword": "AdminPass123!"
+      "email": "{{adminEmail}}",
+      "rawPassword": "{{adminPassword}}"
     }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code !== 200) {
+        throw new Error(`Login failed with status ${pm.response.code}`);
+      }
+
+      const response = pm.response.json();
+      if (typeof response.token !== 'string' || response.token.length === 0) {
+        throw new Error('Login response did not include a token');
+      }
+      if (typeof response.userId !== 'string' || response.userId.length === 0) {
+        throw new Error('Login response did not include a user ID');
+      }
+
+      pm.environment.set('jwt', response.token);
+      pm.environment.set('userId', response.userId);

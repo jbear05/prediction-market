@@ -4,22 +4,24 @@ const router = express.Router();
 const { createUser } = require('../services/users.js');
 const { AppError } = require('../services/errors');
 
-// POST /api/registerUser
+// POST /api/register
 router.post('/', async (req, res, next) => {
   try {
-    const result = await createUser(req.body);
-
-    res.status(201).json({
-      success: true,
-      data: result
+    const result = await createUser({
+      email: req.body.email,
+      displayName: req.body.displayName,
+      rawPassword: req.body.rawPassword
     });
-  } catch (error) {
-    res.status(400).json(
-        {
-            success: false,
-            error: error
-        }
-    )
+    res.status(201).json(result); // HTTP Code 201: Created
+  }
+  catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message
+      });
+    }
+    next(error);
   }
 });
 

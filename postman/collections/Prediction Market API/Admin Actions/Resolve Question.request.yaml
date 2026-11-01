@@ -10,3 +10,8 @@ body:
     {
       "outcome": "yes"
     }
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

@@ -4,22 +4,25 @@ const router = express.Router();
 const { placeWager } = require('../services/wagers');
 const { AppError } = require('../services/errors');
 
-// POST /api/placeWager
-router.post('/', async (req, res, next) => {
+// POST /api/questions/:questionId/place-wager
+router.post('/:questionId/place-wager', async (req, res, next) => {
   try {
-    const result = await placeWager(req.body);
-
-    res.status(201).json({
-      success: true,
-      data: result
+    const result = await placeWager({
+      userId: req.user.id,
+      questionId: req.params.questionId,
+      side: req.body.side,
+      amount: req.body.amount
     });
-  } catch (error) {
-    res.status(400).json(
-        {
-            success: false,
-            error: error
-        }
-    )
+    res.status(201).json(result); // HTTP Code 201: Created
+  }
+  catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message
+      });
+    }
+    next(error);
   }
 });
 
