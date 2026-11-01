@@ -5,7 +5,7 @@ const { searchReportsWrapper } = require('../services/questions');
 const { AppError } = require('../services/errors');
 
 // GET /api/reports/search?reporterId=...&questionId=...&reason=...
-router.get('/find', async (req, res, next) => {
+router.get('/search', async (req, res, next) => {
   try {
     const result = await searchReportsWrapper({
       userId: req.user.id,

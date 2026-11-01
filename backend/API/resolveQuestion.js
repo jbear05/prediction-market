@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const { resolveQuestion } = require('../services/questions');
 const { AppError } = require('../services/errors');
 

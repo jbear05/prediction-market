@@ -29,3 +29,15 @@ values:
     enabled: true
     type: secret
     description: Admin account password used by the Login request
+  - key: q
+    value: ''
+  - key: category
+    value: ''
+  - key: status
+    value: open
+  - key: sort
+    value: newest
+  - key: page
+    value: '1'
+  - key: limit
+    value: '20'

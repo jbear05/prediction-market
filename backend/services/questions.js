@@ -131,7 +131,7 @@ function escapeRegex(text) {
 
 // Search + browse. Every argument is optional. Returns one page of results plus
 // totals. Each result also has totalPool and creator: { _id, displayName }.
-async function searchQuestions({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20 } = {}) {
+async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20 } = {}) {
   const filter = {};
 
   if (status !== 'all') {
@@ -264,9 +264,7 @@ async function resolveReport({ userId, reportId, killQuestion }) {
   return { removedId: report._id };
 }
 
-
-
-
-
-
-module.exports = { resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestions, escapeRegex, reportQuestion, searchReports, searchReportsWrapper, resolveReport };
+module.exports = { 
+  resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestion, escapeRegex, 
+  reportQuestion, searchReports, searchReportsWrapper, resolveReport
+};

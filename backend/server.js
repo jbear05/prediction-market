@@ -37,6 +37,7 @@ app.use('/api/verify', require("./API/resendVerification.js"));
 app.use('/api/daily-claim', require('./API/dailyClaim.js'));
 app.use('/api/questions', require('./API/placeWager'));
 app.use('/api/questions', require('./API/reportQuestion.js'));
+app.use('/api/questions', require('./API/searchQuestion.js'));
 
 // Admin action API
 app.use('/api/questions', require('./API/resolveQuestion'));
