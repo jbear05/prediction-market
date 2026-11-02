@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const requireAdmin = require('../middleware/requireAdmin');
 
 const { searchReportsWrapper } = require('../services/questions');
 const { AppError } = require('../services/errors');
 
 // GET /api/reports?reporterId=...&questionId=...&reason=...
-router.get('/', async (req, res, next) => {
+router.get('/', requireAdmin, async (req, res, next) => {
   try {
     const result = await searchReportsWrapper({
       userId: req.user.id,

@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const requireAdmin = require('../middleware/requireAdmin');
 
 const { resolveQuestion } = require('../services/questions');
 const { AppError } = require('../services/errors');
 
 // POST /api/questions/:questionId/resolve
-router.post('/:questionId/resolve', async (req, res, next) => {
+router.post('/:questionId/resolve', requireAdmin, async (req, res, next) => {
   try {
     const result = await resolveQuestion({
       questionId: req.params.questionId,
