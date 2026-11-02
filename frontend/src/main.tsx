@@ -13,11 +13,10 @@ import ForgotPassword from "./forgotPassword";
 import ResetPassword from "./resetPassword";
 import VerifyEmail from "./verifyEmail";
 
-// login and register send the user to /verify-email?uid=...
-// this reads the uid from the URL and hands it to Adam's page as a prop
+// read email from the URL and pass it to the verification page
 function VerifyEmailRoute() {
   const [searchParams] = useSearchParams();
-  return <VerifyEmail uid={searchParams.get("uid") ?? ""} />;
+  return <VerifyEmail email={searchParams.get("email") ?? ""} />;
 }
 
 // read users email from URL and pass it to the reset page

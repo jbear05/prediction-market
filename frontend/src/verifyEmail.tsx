@@ -3,13 +3,13 @@ import type { FormEvent } from "react";
 import { verifyEmail, resendVerificationCode } from "./authAPI";
 import "./auth.css";
 
-// registration will pass the users id to this page.
+// registration will pass the users email to this page.
 type VerifyEmailProps = {
-  uid: string;
+  email: string;
 };
 
 // displays email verification form
-export default function VerifyEmail({ uid }: VerifyEmailProps) {
+export default function VerifyEmail({ email }: VerifyEmailProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function VerifyEmail({ uid }: VerifyEmailProps) {
     setError("");
     setMessage("");
 
-    if (!uid) {
+    if (!email.trim()) {
       setError("Your account information is missing. Please return to registration.");
       return;
     }
@@ -30,7 +30,7 @@ export default function VerifyEmail({ uid }: VerifyEmailProps) {
     setIsLoading(true);
 
     try {
-      await verifyEmail(uid, code);
+      await verifyEmail(email.trim(), code);
       setIsVerified(true);
     } catch (error) {
       setError(
@@ -48,7 +48,7 @@ export default function VerifyEmail({ uid }: VerifyEmailProps) {
     setError("");
     setMessage("");
 
-    if (!uid) {
+    if (!email.trim()) {
       setError("Your account information is missing. Please return to registration.");
       return;
     }
@@ -56,7 +56,7 @@ export default function VerifyEmail({ uid }: VerifyEmailProps) {
     setIsResending(true);
 
     try {
-      await resendVerificationCode(uid);
+      await resendVerificationCode(email.trim());
       setMessage("A new code was requested. Please check your email.");
     } catch (error) {
       setError(

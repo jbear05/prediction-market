@@ -46,10 +46,11 @@ export default function Register() {
     setSubmitting(true);
 
     try {
-      const result = await register(email, displayName, password);
+      const submittedEmail = email.trim(); 
+      await register(submittedEmail, displayName, password); 
 
-      // the verification code was emailed; that page needs the uid to check it
-      navigate(`/verify-email?uid=${result.uid}`);
+      // pass the registered email to the verification page
+      navigate(`/verify-email?email=${encodeURIComponent(submittedEmail)}`);
     } catch (error) {
       setError(
         error instanceof Error

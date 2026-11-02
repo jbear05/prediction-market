@@ -21,11 +21,12 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const result = await login(email, password);
+      const submittedEmail = email.trim();
+      const result = await login(submittedEmail, password);
 
       if (result.needVerification) {
         // account exists but the email isn't verified yet
-        navigate(`/verify-email?uid=${result.uid}`);
+        navigate(`/verify-email?email=${encodeURIComponent(submittedEmail)}`);
       } else {
         navigate("/");
       }
