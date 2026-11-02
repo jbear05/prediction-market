@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const { claimDaily } = require('../services/users');
+const { dailyClaim } = require('../services/users');
 const { AppError } = require('../services/errors');
 
 // POST /api/daily-claim
 router.post('/', async (req, res, next) => {
   try {
-    const result = await claimDaily({
+    const result = await dailyClaim({
       userId: req.user.id
     });
     res.status(200).json(result);
