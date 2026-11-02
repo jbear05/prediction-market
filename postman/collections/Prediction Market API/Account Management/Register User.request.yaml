@@ -10,6 +10,6 @@ body:
   content: |-
     {
       "email": "user@example.com",
-      "displayName": "John Doe",
+      "displayName": "John_Doe",
       "rawPassword": "password123"
     }

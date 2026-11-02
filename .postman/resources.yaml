@@ -1,4 +1,8 @@
 localResources:
-  specs: []
+  specs:
+    - ../postman/specs/Prediction Market/Prediction Market.yaml
 workspace:
   id: 2d860e20-fbd3-4497-8305-5c667c705ae2
+resourceNameMappings:
+  specs:
+    - ../postman/specs/Prediction Market/Prediction Market.yaml: Prediction Market

@@ -8,8 +8,8 @@ body:
   type: json
   content: |-
     {
-      "email": "{{adminEmail}}",
-      "rawPassword": "{{adminPassword}}"
+      "email": "user@example.com",
+      "rawPassword": "password123"
     }
 auth:
   type: noauth
