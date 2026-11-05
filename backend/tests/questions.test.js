@@ -10,7 +10,7 @@ const {
   resolveQuestion,
   cancelQuestion,
   closeExpiredQuestions,
-  searchQuestions,
+  searchQuestion,
 } = require('../services/questions');
 
 beforeAll(testDb.connect);
@@ -174,7 +174,7 @@ describe('closeExpiredQuestions', () => {
   });
 });
 
-describe('searchQuestions', () => {
+describe('searchQuestion', () => {
   let user;
   beforeEach(async () => {
     user = await makeUser();
@@ -185,42 +185,42 @@ describe('searchQuestions', () => {
   });
 
   test('matches title or description, ignoring case, and only open questions by default', async () => {
-    const { results, total } = await searchQuestions({ q: 'ucf' });
+    const { results, total } = await searchQuestion({ q: 'ucf' });
     expect(total).toBe(2);
     expect(results.map((r) => r.title).sort()).toEqual(['Will UCF win the bowl game?', 'Will the new garage open?']);
   });
 
   test('treats regex characters literally', async () => {
-    expect((await searchQuestions({ q: 'C++' })).total).toBe(1);
-    expect((await searchQuestions({ q: '.*' })).total).toBe(0);
-    await expect(searchQuestions({ q: '(unclosed[' })).resolves.toMatchObject({ total: 0 });
+    expect((await searchQuestion({ q: 'C++' })).total).toBe(1);
+    expect((await searchQuestion({ q: '.*' })).total).toBe(0);
+    await expect(searchQuestion({ q: '(unclosed[' })).resolves.toMatchObject({ total: 0 });
   });
 
   test('filters by category and status', async () => {
-    expect((await searchQuestions({ category: 'tech' })).total).toBe(1);
-    expect((await searchQuestions({ status: 'pending' })).total).toBe(1);
-    expect((await searchQuestions({ status: 'all' })).total).toBe(4);
-    await expect(searchQuestions({ category: 'cooking' })).rejects.toMatchObject({ code: 'INVALID_CATEGORY' });
-    await expect(searchQuestions({ status: 'bogus' })).rejects.toMatchObject({ code: 'INVALID_STATUS' });
+    expect((await searchQuestion({ category: 'tech' })).total).toBe(1);
+    expect((await searchQuestion({ status: 'pending' })).total).toBe(1);
+    expect((await searchQuestion({ status: 'all' })).total).toBe(4);
+    await expect(searchQuestion({ category: 'cooking' })).rejects.toMatchObject({ code: 'INVALID_CATEGORY' });
+    await expect(searchQuestion({ status: 'bogus' })).rejects.toMatchObject({ code: 'INVALID_STATUS' });
   });
 
   test('sorts by popularity and paginates', async () => {
-    const page1 = await searchQuestions({ sort: 'popular', limit: 2, page: 1 });
+    const page1 = await searchQuestion({ sort: 'popular', limit: 2, page: 1 });
     expect(page1.results.map((r) => r.totalPool)).toEqual([500, 50]);
     expect(page1.totalPages).toBe(2);
-    const page2 = await searchQuestions({ sort: 'popular', limit: 2, page: 2 });
+    const page2 = await searchQuestion({ sort: 'popular', limit: 2, page: 2 });
     expect(page2.results).toHaveLength(1);
   });
 
   test('includes the creator name and total pool in each result', async () => {
-    const { results } = await searchQuestions({ q: 'C++' });
+    const { results } = await searchQuestion({ q: 'C++' });
     expect(results[0].creator.displayName).toBe(user.displayName);
     expect(results[0].creator.passwordHash).toBeUndefined();
     expect(results[0].totalPool).toBe(500);
   });
 
   test('clamps silly page and limit values', async () => {
-    const result = await searchQuestions({ page: -3, limit: 1000 });
+    const result = await searchQuestion({ page: -3, limit: 1000 });
     expect(result.page).toBe(1);
     expect(result.limit).toBe(50);
   });

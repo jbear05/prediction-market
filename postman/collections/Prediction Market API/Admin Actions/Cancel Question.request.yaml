@@ -1,0 +1,14 @@
+$kind: http-request
+method: POST
+url: "{{baseUrl}}/api/questions/{{questionId}}/cancel"
+body:
+  type: json
+  content: ""
+order: 2000
+pathVariables:
+  questionId: "{{questionId}}"
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'
