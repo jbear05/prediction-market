@@ -1,0 +1,11 @@
+$kind: http-request
+method: POST
+url: "{{baseUrl}}/api/daily-claim"
+body:
+  type: json
+  content: ""
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    token: "{{jwt}}"

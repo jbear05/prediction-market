@@ -1,0 +1,17 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/reports/{{reportId}}/resolve'
+order: 4000
+body:
+  type: json
+  content: |-
+    {
+      "killQuestion": false
+    }
+pathVariables:
+  reportId: '{{reportId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'

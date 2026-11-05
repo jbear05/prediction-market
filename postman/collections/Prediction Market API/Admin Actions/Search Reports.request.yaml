@@ -1,0 +1,15 @@
+$kind: http-request
+method: GET
+url: "{{baseUrl}}/api/reports?reporterId={{reporterId}}&questionId={{questionId}}&reason={{reason}}"
+body:
+  type: json
+  content: ""
+order: 3000
+queryParams:
+  reporterId: "{{reporterId}}"
+  questionId: "{{questionId}}"
+  reason: "{{reason}}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{jwt}}"

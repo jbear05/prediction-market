@@ -1,0 +1,37 @@
+name: Prediction Market
+values:
+  - key: baseUrl
+    value: ''
+  - key: questionId
+    value: ''
+  - key: userId
+    value: ''
+  - key: adminId
+    value: ''
+  - key: reporterId
+    value: ''
+  - key: reason
+    value: ''
+  - key: reportId
+    value: ''
+  - key: jwt
+    value: ''
+    description: JWT saved automatically by the Login request
+  - key: adminEmail
+    value: ''
+    description: Admin account email used by the Login request
+  - key: adminPassword
+    value: ''
+    description: Admin account password used by the Login request
+  - key: q
+    value: ''
+  - key: category
+    value: ''
+  - key: status
+    value: open
+  - key: sort
+    value: newest
+  - key: page
+    value: '1'
+  - key: limit
+    value: '20'

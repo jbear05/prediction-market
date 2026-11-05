@@ -1,0 +1,22 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/questions?q={{q}}&category={{category}}&status={{status}}&sort={{sort}}&page={{page}}&limit={{limit}}'
+order: 5000
+queryParams:
+  - key: q
+    value: '{{q}}'
+  - key: category
+    value: '{{category}}'
+  - key: status
+    value: '{{status}}'
+  - key: sort
+    value: '{{sort}}'
+  - key: page
+    value: '{{page}}'
+  - key: limit
+    value: '{{limit}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'
