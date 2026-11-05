@@ -1,6 +1,9 @@
 import { Link } from "react-router";
+import "./home.css";
+import { useRef } from "react";
 
 export default function Home() {
+  const createMarketDialog = useRef<HTMLDialogElement>(null);
   return (
     <>
       <header className="site-header">
@@ -25,7 +28,7 @@ export default function Home() {
           </div>
         </nav>
       </header>
-      
+
       <main className="home-page">
         {/* page heading */}
         <header className="home-heading">
@@ -89,8 +92,9 @@ export default function Home() {
 
         {/* Questions created by this user */}
         <section className="home-section" aria-labelledby="my-markets-heading">
-          <h2 id="my-markets-heading">My Markets</h2>
+        <h2 id="my-markets-heading">My Markets</h2>
 
+        <div className="market-controls">
           <div className="section-filters">
             <button type="button" aria-pressed="true">
               Current
@@ -99,6 +103,15 @@ export default function Home() {
               History
             </button>
           </div>
+
+          <button
+            className="create-market-button"
+            type="button"
+            onClick={() => createMarketDialog.current?.showModal()}
+          >
+            Create market
+          </button>
+        </div>
 
           <div className="table-container">
             <table className="home-table">
@@ -119,14 +132,23 @@ export default function Home() {
               </tbody>
             </table>
           </div>
-
-          <a className="create-market-button" href="#create-market">
-            Create market
-          </a>
         </section>
 
-        {/* Market submission will be connected to the API later */}
-        <section id="create-market" className="create-market-panel" aria-labelledby="create-market-heading">
+        {/* market submission will be connected to the API later */}
+        <dialog
+          ref={createMarketDialog}
+          className="create-market-panel create-market-dialog"
+          aria-labelledby="create-market-heading"
+        >
+          {/* close the popup */}
+          <button
+            className="dialog-close"
+            type="button"
+            aria-label="Close create market"
+            onClick={() => createMarketDialog.current?.close()}
+          >
+            ×
+          </button>
           <h2 id="create-market-heading">Create a market</h2>
           <p>
             Submit a prediction question for admin review. Once approved, the
@@ -175,7 +197,7 @@ export default function Home() {
               Submit for review
             </button>
           </form>
-        </section>
+        </dialog>
       </main>
     </>
   );
