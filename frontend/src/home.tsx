@@ -49,9 +49,9 @@ export default function Home() {
             <Link className="nav-link active" to="/" aria-current="page">
               Home
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/browse-markets">
               Browse Markets
-            </button>
+            </Link>
             <button className="nav-link" type="button" disabled>
               Account
             </button>
