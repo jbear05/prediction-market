@@ -11,13 +11,21 @@ export default function BrowseMarkets() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // keep typed text separate from the submitted search
+  const [searchText, setSearchText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  
   // load the first page of open markets
   useEffect(() => {
     let ignore = false;
 
     async function loadMarkets() {
+      setIsLoading(true);
+      setError("");
+      setMarketData(null);
+
       try {
-        const result = await searchMarkets("", "", "newest", 1);
+        const result = await searchMarkets(searchQuery, "", "newest", 1);
 
         if (!ignore) {
           setMarketData(result);
@@ -25,9 +33,7 @@ export default function BrowseMarkets() {
       } catch (error) {
         if (!ignore) {
           setError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load markets. Please try again.",
+            error instanceof Error ? error.message : "Unable to load markets. Please try again.",
           );
         }
       } finally {
@@ -43,7 +49,7 @@ export default function BrowseMarkets() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [searchQuery]);
 
   return (
     <>
@@ -83,7 +89,10 @@ export default function BrowseMarkets() {
         {/* search controls */}
         <form
           className="market-search"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={(event) => {
+            event.preventDefault();
+            setSearchQuery(searchText.trim());
+          }}
         >
           <label htmlFor="market-search">Search questions</label>
 
@@ -94,13 +103,22 @@ export default function BrowseMarkets() {
               type="search"
               placeholder="Search titles or descriptions"
               maxLength={100}
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
             />
 
             <button className="market-search-button" type="submit">
               Search
             </button>
 
-            <button className="market-clear-button" type="reset">
+            <button
+              className="market-clear-button"
+              type="button"
+              onClick={() => {
+                setSearchText("");
+                setSearchQuery("");
+              }}
+            >
               Clear
             </button>
           </div>
@@ -149,7 +167,7 @@ export default function BrowseMarkets() {
           )}
 
           {!isLoading && !error && marketData?.results.length === 0 && (
-            <p>No open markets are available right now.</p>
+            <p>No markets match your search. Try another word or clear your search.</p>
           )}
 
           <div className="market-grid">
