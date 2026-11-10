@@ -15,7 +15,11 @@ export default function BrowseMarkets() {
   const [searchText, setSearchText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   
-  // load the first page of open markets
+  const [category, setCategory] = useState("");
+  const [sort, setSort] = useState("newest");
+
+  const [page, setPage] = useState(1);
+  // load markets for the current search, filters, and page
   useEffect(() => {
     let ignore = false;
 
@@ -25,7 +29,7 @@ export default function BrowseMarkets() {
       setMarketData(null);
 
       try {
-        const result = await searchMarkets(searchQuery, "", "newest", 1);
+        const result = await searchMarkets(searchQuery, category, sort, page);
 
         if (!ignore) {
           setMarketData(result);
@@ -49,7 +53,7 @@ export default function BrowseMarkets() {
     return () => {
       ignore = true;
     };
-  }, [searchQuery]);
+  }, [searchQuery, category, sort, page]);
 
   return (
     <>
@@ -92,6 +96,7 @@ export default function BrowseMarkets() {
           onSubmit={(event) => {
             event.preventDefault();
             setSearchQuery(searchText.trim());
+            setPage(1);
           }}
         >
           <label htmlFor="market-search">Search questions</label>
@@ -117,6 +122,7 @@ export default function BrowseMarkets() {
               onClick={() => {
                 setSearchText("");
                 setSearchQuery("");
+                setPage(1);
               }}
             >
               Clear
@@ -126,24 +132,67 @@ export default function BrowseMarkets() {
 
         {/* categories and sorting */}
         <div className="market-toolbar">
-          <div className="market-categories" role="group" aria-label="Market categories">
-            <button type="button" aria-pressed="true">
+          <div
+            className="market-categories"
+            role="group"
+            aria-label="Market categories"
+          >
+            <button
+              type="button"
+              aria-pressed={category === ""}
+              onClick={() => {
+                setCategory("");
+                setPage(1);
+              }}
+            >
               All
             </button>
-            <button type="button" aria-pressed="false">
+
+            <button
+              type="button"
+              aria-pressed={category === "sports"}
+              onClick={() => {
+                setCategory("sports");
+                setPage(1);
+              }}
+            >
               Sports
             </button>
-            <button type="button" aria-pressed="false">
+
+            <button
+              type="button"
+              aria-pressed={category === "campus"}
+              onClick={() => {
+                setCategory("campus");
+                setPage(1);
+              }}
+            >
               UCF/Campus
             </button>
-            <button type="button" aria-pressed="false">
+
+            <button
+              type="button"
+              aria-pressed={category === "other"}
+              onClick={() => {
+                setCategory("other");
+                setPage(1);
+              }}
+            >
               Other
             </button>
           </div>
 
           <div className="market-sort">
             <label htmlFor="market-sort">Sort by</label>
-            <select id="market-sort" name="sort" defaultValue="newest">
+            <select
+              id="market-sort"
+              name="sort"
+              value={sort}
+              onChange={(event) => {
+                setSort(event.target.value);
+                setPage(1);
+              }}
+            >
               <option value="newest">Newest</option>
               <option value="popular">Most popular</option>
               <option value="closing">Closing soon</option>
@@ -229,6 +278,30 @@ export default function BrowseMarkets() {
               </article>
             ))}
           </div>
+          {/* move between pages of server results */}
+          {marketData && marketData.totalPages > 0 && (
+            <nav className="market-pagination" aria-label="Market result pages">
+              <button
+                type="button"
+                disabled={page <= 1 || isLoading}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {marketData.page} of {marketData.totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={page >= marketData.totalPages || isLoading}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </button>
+            </nav>
+          )}
         </section>
       </main>
     </>

@@ -303,3 +303,42 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+
+/* centered page navigation */
+.market-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.market-pagination button {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-pagination button:hover:not(:disabled) {
+  border-color: #355f3b;
+  background-color: #edf4ec;
+}
+
+.market-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.market-pagination span {
+  font-size: 14px;
+  font-weight: 600;
+}
