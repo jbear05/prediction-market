@@ -155,3 +155,151 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* white market cards */
+.market-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.market-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.market-category {
+  color: #355f3b;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.market-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background-color: #edf4ec;
+  color: #355f3b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* question and description */
+.market-card-title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.market-card-description {
+  margin: 0 0 24px;
+  color: #52636b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* keep the information and buttons aligned across cards */
+.market-card-info {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.market-card-info p {
+  margin: 0 0 8px;
+  color: #52636b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* total and YES/NO coin pools */
+.market-card-pools {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #d9dfd8;
+}
+
+.market-total,
+.market-pool-sides {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-total {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.market-total > span {
+  color: #52636b;
+}
+
+.market-pool-sides {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.market-pool-sides > span:first-child {
+  color: #355f3b;
+}
+
+/* equal-width prediction buttons */
+.market-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.market-card-actions button {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #1b333e;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-card-actions .market-yes {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+.market-details {
+  align-self: center;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #355f3b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* temporary disabled state until the popup is connected */
+.market-card-actions button:disabled,
+.market-details:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

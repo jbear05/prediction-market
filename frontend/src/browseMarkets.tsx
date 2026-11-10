@@ -1,7 +1,50 @@
 import { Link } from "react-router";
 import "./home.css";
 import "./browseMarkets.css";
+import { useEffect, useState } from "react";
+import { searchMarkets } from "./marketAPI";
+import type { MarketSearchResult } from "./marketAPI";
+
 export default function BrowseMarkets() {
+
+  const [marketData, setMarketData] = useState<MarketSearchResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // load the first page of open markets
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadMarkets() {
+      try {
+        const result = await searchMarkets("", "", "newest", 1);
+
+        if (!ignore) {
+          setMarketData(result);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load markets. Please try again.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadMarkets();
+
+    // ignore results if the user leaves this page
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   return (
     <>
       {/* shared navigation */}
@@ -89,15 +132,84 @@ export default function BrowseMarkets() {
             </select>
           </div>
         </div>
-        {/* results will come from the search API */}
+
+        {/* display the server response */}
         <section className="market-results" aria-label="Market results">
           <div className="market-results-summary">
-            <p>Markets will appear here once connected.</p>
+            <p>
+              {isLoading ? "Loading markets..." : marketData ? `${marketData.results.length} of ${marketData.total} open markets` : "Markets unavailable"}
+            </p>
             <p>Fictional currency only</p>
           </div>
 
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {!isLoading && !error && marketData?.results.length === 0 && (
+            <p>No open markets are available right now.</p>
+          )}
+
           <div className="market-grid">
-            {/* market cards will go here */}
+            {marketData?.results.map((market) => (
+              <article className="market-card" key={market._id}>
+                {/* category and market status */}
+                <div className="market-card-header">
+                  <span className="market-category">
+                    {market.category === "campus" ? "UCF/Campus" : market.category}
+                  </span>
+                  <span className="market-status">Open</span>
+                </div>
+
+                <h2 className="market-card-title">{market.title}</h2>
+                <p className="market-card-description">{market.description}</p>
+
+                {/* creator and closing time */}
+                <div className="market-card-info">
+                  <p>Created by {market.creator?.displayName ?? "Unknown user"}</p>
+                  <p>
+                    Closes{" "}
+                    {new Date(market.closesAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      timeZoneName: "short",
+                    })}
+                  </p>
+                </div>
+
+                {/* coin totals returned by the server */}
+                <div className="market-card-pools">
+                  <div className="market-total">
+                    <span>Total wagered</span>
+                    <strong>{market.totalPool.toLocaleString()} coins</strong>
+                  </div>
+
+                  <div className="market-pool-sides">
+                    <span>YES pool {market.poolYes.toLocaleString()} coins</span>
+                    <span>NO pool {market.poolNo.toLocaleString()} coins</span>
+                  </div>
+                </div>
+
+                {/* enabled when the wager popup is connected */}
+                <div className="market-card-actions">
+                  <button className="market-yes" type="button" disabled>
+                    YES
+                  </button>
+                  <button className="market-no" type="button" disabled>
+                    NO
+                  </button>
+                </div>
+
+                <button className="market-details" type="button" disabled>
+                  View details
+                </button>
+              </article>
+            ))}
           </div>
         </section>
       </main>
