@@ -531,3 +531,34 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.market-empty {
+  padding: 48px 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+  text-align: center;
+}
+
+.market-empty h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.market-empty p {
+  margin: 0 0 24px;
+  color: #52636b;
+  line-height: 1.6;
+}
+
+.market-empty .market-search-button {
+  min-height: 48px;
+  padding: 10px 24px;
+  border: 1px solid #355f3b;
+  border-radius: 7px;
+  background-color: #355f3b;
+  color: #fffff8;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

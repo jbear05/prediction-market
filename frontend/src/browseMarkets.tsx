@@ -20,6 +20,7 @@ export default function BrowseMarkets() {
   const [sort, setSort] = useState("newest");
 
   const [page, setPage] = useState(1);
+  const [retryCount, setRetryCount] = useState(0);
 
   const [selectedMarket, setSelectedMarket] = useState<{
     market: Market;
@@ -60,7 +61,7 @@ export default function BrowseMarkets() {
     return () => {
       ignore = true;
     };
-  }, [searchQuery, category, sort, page]);
+  }, [searchQuery, category, sort, page, retryCount]);
 
   return (
     <>
@@ -217,13 +218,36 @@ export default function BrowseMarkets() {
           </div>
 
           {error && (
-            <p className="auth-error" role="alert">
-              {error}
-            </p>
+            <div className="market-empty">
+              <h2>Couldn’t load markets</h2>
+              <p role="alert">{error}</p>
+              <button
+                className="market-search-button"
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+              >
+                Retry
+              </button>
+            </div>
           )}
 
           {!isLoading && !error && marketData?.results.length === 0 && (
-            <p>No markets match your search. Try another word or clear your search.</p>
+            <div className="market-empty">
+              <h2>No markets found</h2>
+              <p>Try a different search or clear your filters to see all open markets.</p>
+              <button
+                className="market-search-button"
+                type="button"
+                onClick={() => {
+                  setSearchText("");
+                  setSearchQuery("");
+                  setCategory("");
+                  setPage(1);
+                }}
+              >
+                Clear filters
+              </button>
+            </div>
           )}
 
           <div className="market-grid">
