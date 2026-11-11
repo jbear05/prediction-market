@@ -3,7 +3,8 @@ import "./home.css";
 import "./browseMarkets.css";
 import { useEffect, useState } from "react";
 import { searchMarkets } from "./marketAPI";
-import type { MarketSearchResult } from "./marketAPI";
+import type { Market, MarketSearchResult } from "./marketAPI";
+import MarketPopup from "./marketPopup";
 
 export default function BrowseMarkets() {
 
@@ -19,6 +20,9 @@ export default function BrowseMarkets() {
   const [sort, setSort] = useState("newest");
 
   const [page, setPage] = useState(1);
+
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
+
   // load markets for the current search, filters, and page
   useEffect(() => {
     let ignore = false;
@@ -272,7 +276,7 @@ export default function BrowseMarkets() {
                   </button>
                 </div>
 
-                <button className="market-details" type="button" disabled>
+                <button className="market-details" type="button" onClick={() => setSelectedMarket(market)}>
                   View details
                 </button>
               </article>
@@ -304,6 +308,33 @@ export default function BrowseMarkets() {
           )}
         </section>
       </main>
+
+      {/* show the popup when a market is selected */}
+      {selectedMarket && (
+        <MarketPopup
+          market={selectedMarket}
+          onClose={() => setSelectedMarket(null)}
+          onBetPlaced={(question) => {
+            setMarketData((current) => {
+              if (!current) return current;
+
+              return {
+                ...current,
+                results: current.results.map((market) => {
+                  if (market._id !== question._id) return market;
+
+                  return {
+                    ...market,
+                    poolYes: question.poolYes,
+                    poolNo: question.poolNo,
+                    totalPool: question.poolYes + question.poolNo,
+                  };
+                }),
+              };
+            });
+          }}
+        />
+      )}
     </>
   );
 }

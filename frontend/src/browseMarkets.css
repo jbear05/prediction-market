@@ -342,3 +342,192 @@
   font-size: 14px;
   font-weight: 600;
 }
+
+/* centered market details popup */
+.market-popup {
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  max-width: 620px;
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font-family: Inter, sans-serif;
+}
+
+.market-popup::backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+/* close button at the top left */
+.market-popup-close {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  padding: 0;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.market-popup-close:hover {
+  background-color: #edf4ec;
+}
+
+/* question and supporting information */
+.market-popup h2 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.market-popup h3 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.market-popup p {
+  margin: 0 0 16px;
+  color: #52636b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* coin pool summary */
+.market-popup-pools {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #fffff8;
+}
+
+.market-popup-pools p {
+  margin: 0 0 8px;
+  color: #1b333e;
+}
+
+.market-popup-pools p:last-child {
+  margin-bottom: 0;
+}
+
+/* visible keyboard focus inside the popup */
+.market-popup button:focus-visible,
+.market-popup input:focus-visible {
+  outline: 3px solid #1b333e;
+  outline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .market-popup {
+    padding: 20px;
+  }
+}
+
+/* wager form inside the market popup */
+.market-wager-form {
+  margin-top: 24px;
+}
+
+.market-wager-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.market-wager-form legend {
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* prediction selection */
+.market-side-options {
+  display: flex;
+  gap: 12px;
+}
+
+.market-side-options button {
+  flex: 1;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #1b333e;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-side-options button[aria-pressed="true"] {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+.market-popup .market-side-message {
+  margin: 8px 0 24px;
+  font-size: 12px;
+}
+
+/* coin amount field */
+.market-wager-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.market-wager-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+}
+
+.market-wager-form small {
+  display: block;
+  margin-top: 8px;
+  color: #52636b;
+  font-size: 12px;
+}
+
+/* submission button */
+.market-confirm {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 7px;
+  background-color: #355f3b;
+  color: #fffff8;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-wager-form button:disabled,
+.market-wager-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
