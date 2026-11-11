@@ -45,7 +45,23 @@ async function dailyClaim({ userId }) {
 	});
 }
 
+async function nextClaim({ userId }) {
+	if (!mongoose.isValidObjectId(userId)) throw new AppError(400, 'INVALID_ID', 'Invalid user id');
+
+	const user = await User.findById(userId);
+	if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+
+	const now = new Date();
+	const lastClaim = user.lastDailyClaimAt;
+	const isEligible = !lastClaim || now.getTime() - lastClaim.getTime() >= DAILY_CLAIM_INTERVAL_MS;
+	const nextClaimTime = isEligible ? now : new Date(lastClaim.getTime() + DAILY_CLAIM_INTERVAL_MS);
+
+	return { nextClaimAt: nextClaimTime, claimEligible: isEligible };
+}
+
 async function getBalance({ userId }) {
+	if (!mongoose.isValidObjectId(userId)) throw new AppError(400, 'INVALID_ID', 'Invalid user id');
+
 	const user = await User.findById(userId);
 	if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
 
@@ -109,6 +125,7 @@ async function newVerCode({ email }) {
 }
 
 module.exports = {
-	dailyClaim, getBalance, createUser,  login,  passwordResetCode, finishPasswordReset,
-	verifyUser, newVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS
+	dailyClaim, nextClaim, getBalance, createUser, login,
+	passwordResetCode, finishPasswordReset, verifyUser,
+	newVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS
 };
