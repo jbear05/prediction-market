@@ -7,16 +7,18 @@ type MarketPopupProps = {
   market: Market;
   onBetPlaced: (question: Pick<Market, "_id" | "poolYes" | "poolNo">) => void;
   onClose: () => void;
+  initialSide?: "yes" | "no" | null;
 };
 
 // display the selected market in a popup
 export default function MarketPopup({
   market,
   onClose,
-  onBetPlaced
+  onBetPlaced,
+  initialSide = null,
 }: MarketPopupProps) {
   const popupRef = useRef<HTMLDialogElement>(null);
-  const [side, setSide] = useState<"yes" | "no" | null>(null);
+  const [side, setSide] = useState<"yes" | "no" | null>(initialSide);
   const [amount, setAmount] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);

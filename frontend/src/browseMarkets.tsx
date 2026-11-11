@@ -21,7 +21,10 @@ export default function BrowseMarkets() {
 
   const [page, setPage] = useState(1);
 
-  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
+  const [selectedMarket, setSelectedMarket] = useState<{
+    market: Market;
+    side: "yes" | "no" | null;
+  } | null>(null);
 
   // load markets for the current search, filters, and page
   useEffect(() => {
@@ -224,14 +227,19 @@ export default function BrowseMarkets() {
           )}
 
           <div className="market-grid">
-            {marketData?.results.map((market) => (
+            {marketData?.results.map((market) => {
+              const canBet =
+                market.status === "open" &&
+                Date.parse(market.closesAt) > Date.now();
+
+              return (
               <article className="market-card" key={market._id}>
                 {/* category and market status */}
                 <div className="market-card-header">
                   <span className="market-category">
                     {market.category === "campus" ? "UCF/Campus" : market.category}
                   </span>
-                  <span className="market-status">Open</span>
+                  <span className="market-status">{canBet ? "Open" : "Closed"}</span>
                 </div>
 
                 <h2 className="market-card-title">{market.title}</h2>
@@ -268,19 +276,30 @@ export default function BrowseMarkets() {
 
                 {/* enabled when the wager popup is connected */}
                 <div className="market-card-actions">
-                  <button className="market-yes" type="button" disabled>
+                  <button
+                    className="market-yes"
+                    type="button"
+                    disabled={!canBet}
+                    onClick={() => setSelectedMarket({ market, side: "yes" })}
+                  >
                     YES
                   </button>
-                  <button className="market-no" type="button" disabled>
+                  <button
+                    className="market-no"
+                    type="button"
+                    disabled={!canBet}
+                    onClick={() => setSelectedMarket({ market, side: "no" })}
+                  >
                     NO
                   </button>
                 </div>
 
-                <button className="market-details" type="button" onClick={() => setSelectedMarket(market)}>
+                <button className="market-details" type="button" onClick={() => setSelectedMarket({ market, side: null })}>
                   View details
                 </button>
               </article>
-            ))}
+              ); 
+            })}
           </div>
           {/* move between pages of server results */}
           {marketData && marketData.totalPages > 0 && (
@@ -312,7 +331,8 @@ export default function BrowseMarkets() {
       {/* show the popup when a market is selected */}
       {selectedMarket && (
         <MarketPopup
-          market={selectedMarket}
+          market={selectedMarket.market}
+          initialSide={selectedMarket.side}
           onClose={() => setSelectedMarket(null)}
           onBetPlaced={(question) => {
             setMarketData((current) => {
