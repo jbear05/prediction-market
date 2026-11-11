@@ -4,37 +4,37 @@ const Question = require('../models/Question');
 const Wager = require('../models/Wager');
 const Report = require('../models/Report');
 const Transaction = require('../models/Transaction');
-const { AppError } = require('./errors');
+const { AppError, mapMongooseInputError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
 
 // Pays out (or refunds) every wager on a question inside the current transaction.
 // payouts: array of { wager, payout }. Users get the coins, wagers get payout set,
 // and the ledger gets one row per wager that paid anything.
 async function settleWagers(session, question, payouts, type) {
-  if (payouts.length === 0) return 0;
+	if (payouts.length === 0) return 0;
 
-  await Wager.bulkWrite(
-    payouts.map(({ wager, payout }) => ({
-      updateOne: { filter: { _id: wager._id }, update: { $set: { payout } } },
-    })),
-    { session }
-  );
+	await Wager.bulkWrite(
+		payouts.map(({ wager, payout }) => ({
+			updateOne: { filter: { _id: wager._id }, update: { $set: { payout } } },
+		})),
+		{ session }
+	);
 
-  const paid = payouts.filter((p) => p.payout > 0);
-  if (paid.length > 0) {
-    await User.bulkWrite(
-      paid.map(({ wager, payout }) => ({
-        updateOne: { filter: { _id: wager.userId }, update: { $inc: { balance: payout } } },
-      })),
-      { session }
-    );
-    await Transaction.insertMany(
-      paid.map(({ wager, payout }) => ({ userId: wager.userId, type, amount: payout, questionId: question._id })),
-      { session }
-    );
-  }
+	const paid = payouts.filter((p) => p.payout > 0);
+	if (paid.length > 0) {
+		await User.bulkWrite(
+			paid.map(({ wager, payout }) => ({
+				updateOne: { filter: { _id: wager.userId }, update: { $inc: { balance: payout } } },
+			})),
+			{ session }
+		);
+		await Transaction.insertMany(
+			paid.map(({ wager, payout }) => ({ userId: wager.userId, type, amount: payout, questionId: question._id })),
+			{ session }
+		);
+	}
 
-  return paid.reduce((sum, p) => sum + p.payout, 0);
+	return paid.reduce((sum, p) => sum + p.payout, 0);
 }
 
 // Admin picks the winning side. Winners split the whole pool in proportion to
@@ -43,228 +43,252 @@ async function settleWagers(session, question, payouts, type) {
 // The status condition in the first update means a question can only be
 // resolved once, even if the admin double-clicks.
 async function resolveQuestion({ questionId, outcome }) {
-  if (!mongoose.isValidObjectId(questionId)) {
-    throw new AppError(400, 'INVALID_ID', 'Invalid question id');
-  }
-  if (outcome !== 'yes' && outcome !== 'no') {
-    throw new AppError(400, 'INVALID_OUTCOME', 'outcome must be "yes" or "no"');
-  }
+	if (!mongoose.isValidObjectId(questionId)) {
+		throw new AppError(400, 'INVALID_ID', 'Invalid question id');
+	}
+	if (outcome !== 'yes' && outcome !== 'no') {
+		throw new AppError(400, 'INVALID_OUTCOME', 'outcome must be "yes" or "no"');
+	}
 
-  return withTransaction(async (session) => {
-    const question = await Question.findOneAndUpdate(
-      { _id: questionId, status: { $in: ['open', 'closed'] } },
-      { $set: { status: 'resolved', outcome } },
-      { returnDocument: 'after', session }
-    );
-    if (!question) {
-      throw new AppError(409, 'QUESTION_NOT_RESOLVABLE', 'Question not found, or already resolved/cancelled');
-    }
+	return withTransaction(async (session) => {
+		const question = await Question.findOneAndUpdate(
+			{ _id: questionId, status: { $in: ['open', 'closed'] } },
+			{ $set: { status: 'resolved', outcome } },
+			{ returnDocument: 'after', session }
+		);
+		if (!question) {
+			throw new AppError(409, 'QUESTION_NOT_RESOLVABLE', 'Question not found, or already resolved/cancelled');
+		}
 
-    const wagers = await Wager.find({ questionId }).session(session);
-    const totalPool = question.poolYes + question.poolNo;
-    const winningPool = outcome === 'yes' ? question.poolYes : question.poolNo;
+		const wagers = await Wager.find({ questionId }).session(session);
+		const totalPool = question.poolYes + question.poolNo;
+		const winningPool = outcome === 'yes' ? question.poolYes : question.poolNo;
 
-    let payouts;
-    let type;
-    if (winningPool === 0) {
-      // Nobody picked the winner: refund everyone
-      payouts = wagers.map((wager) => ({ wager, payout: wager.amount }));
-      type = 'refund';
-    } else {
-      payouts = wagers.map((wager) => ({
-        wager,
-        payout: wager.side === outcome ? Math.floor((wager.amount * totalPool) / winningPool) : 0,
-      }));
-      type = 'payout';
-    }
+		let payouts;
+		let type;
+		if (winningPool === 0) {
+			// Nobody picked the winner: refund everyone
+			payouts = wagers.map((wager) => ({ wager, payout: wager.amount }));
+			type = 'refund';
+		} else {
+			payouts = wagers.map((wager) => ({
+				wager,
+				payout: wager.side === outcome ? Math.floor((wager.amount * totalPool) / winningPool) : 0,
+			}));
+			type = 'payout';
+		}
 
-    const totalPaid = await settleWagers(session, question, payouts, type);
-    return { question, wagerCount: wagers.length, totalPaid, refunded: type === 'refund' };
-  });
+		const totalPaid = await settleWagers(session, question, payouts, type);
+		return { question, wagerCount: wagers.length, totalPaid, refunded: type === 'refund' };
+	});
 }
 
 // Admin calls off a question (bad wording, event cancelled...). Everyone gets their coins back.
 async function cancelQuestion({ questionId }) {
-  if (!mongoose.isValidObjectId(questionId)) {
-    throw new AppError(400, 'INVALID_ID', 'Invalid question id');
-  }
+	if (!mongoose.isValidObjectId(questionId)) {
+		throw new AppError(400, 'INVALID_ID', 'Invalid question id');
+	}
 
-  return withTransaction(async (session) => {
-    const question = await Question.findOneAndUpdate(
-      { _id: questionId, status: { $in: ['pending', 'open', 'closed'] } },
-      { $set: { status: 'cancelled' } },
-      { returnDocument: 'after', session }
-    );
-    if (!question) {
-      throw new AppError(409, 'QUESTION_NOT_CANCELLABLE', 'Question not found, or already resolved/cancelled');
-    }
+	return withTransaction(async (session) => {
+		const question = await Question.findOneAndUpdate(
+			{ _id: questionId, status: { $in: ['pending', 'open', 'closed'] } },
+			{ $set: { status: 'cancelled' } },
+			{ returnDocument: 'after', session }
+		);
+		if (!question) {
+			throw new AppError(409, 'QUESTION_NOT_CANCELLABLE', 'Question not found, or already resolved/cancelled');
+		}
 
-    const wagers = await Wager.find({ questionId }).session(session);
-    const payouts = wagers.map((wager) => ({ wager, payout: wager.amount }));
-    const totalRefunded = await settleWagers(session, question, payouts, 'refund');
-    return { question, wagerCount: wagers.length, totalRefunded };
-  });
+		const wagers = await Wager.find({ questionId }).session(session);
+		const payouts = wagers.map((wager) => ({ wager, payout: wager.amount }));
+		const totalRefunded = await settleWagers(session, question, payouts, 'refund');
+		return { question, wagerCount: wagers.length, totalRefunded };
+	});
 }
 
 // Marks open questions whose closesAt has passed as closed. placeWager already
 // refuses late wagers on its own; this just keeps the status field honest.
 // Call it from a timer in server.js, e.g. setInterval(closeExpiredQuestions, 60 * 1000).
 async function closeExpiredQuestions() {
-  const result = await Question.updateMany(
-    { status: 'open', closesAt: { $lte: new Date() } },
-    { $set: { status: 'closed' } }
-  );
-  return result.modifiedCount;
+	const result = await Question.updateMany(
+		{ status: 'open', closesAt: { $lte: new Date() } },
+		{ $set: { status: 'closed' } }
+	);
+	return result.modifiedCount;
 }
 
 // totalPool isn't stored, so "popular" sorts on a value computed in the query
 const SORTS = {
-  newest: { createdAt: -1 },
-  popular: { totalPool: -1, createdAt: -1 },
-  closing: { closesAt: 1 },
+	newest: { createdAt: -1 },
+	popular: { totalPool: -1, createdAt: -1 },
+	closing: { closesAt: 1 },
 };
 
 // Escape characters that mean something in a regex, so "C++" or "(test" searches literally
 function escapeRegex(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Search + browse. Every argument is optional. Returns one page of results plus
 // totals. Each result also has totalPool and creator: { _id, displayName }.
 async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20 } = {}) {
-  const filter = {};
+	const filter = {};
 
-  if (status !== 'all') {
-    if (!Question.STATUSES.includes(status)) {
-      throw new AppError(400, 'INVALID_STATUS', `status must be one of: all, ${Question.STATUSES.join(', ')}`);
-    }
-    filter.status = status;
-  }
-  if (category) {
-    if (!Question.CATEGORIES.includes(category)) {
-      throw new AppError(400, 'INVALID_CATEGORY', `category must be one of: ${Question.CATEGORIES.join(', ')}`);
-    }
-    filter.category = category;
-  }
-  if (q && q.trim()) {
-    const pattern = new RegExp(escapeRegex(q.trim().slice(0, 100)), 'i');
-    filter.$or = [{ title: pattern }, { description: pattern }];
-  }
-  if (!SORTS[sort]) {
-    throw new AppError(400, 'INVALID_SORT', `sort must be one of: ${Object.keys(SORTS).join(', ')}`);
-  }
+	if (status !== 'all') {
+		if (!Question.STATUSES.includes(status)) {
+			throw new AppError(400, 'INVALID_STATUS', `status must be one of: all, ${Question.STATUSES.join(', ')}`);
+		}
+		filter.status = status;
+	}
+	if (category) {
+		if (!Question.CATEGORIES.includes(category)) {
+			throw new AppError(400, 'INVALID_CATEGORY', `category must be one of: ${Question.CATEGORIES.join(', ')}`);
+		}
+		filter.category = category;
+	}
+	if (q && q.trim()) {
+		const pattern = new RegExp(escapeRegex(q.trim().slice(0, 100)), 'i');
+		filter.$or = [{ title: pattern }, { description: pattern }];
+	}
+	if (!SORTS[sort]) {
+		throw new AppError(400, 'INVALID_SORT', `sort must be one of: ${Object.keys(SORTS).join(', ')}`);
+	}
 
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const pageSize = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+	const pageNum = Math.max(1, parseInt(page, 10) || 1);
+	const pageSize = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
 
-  const [results, total] = await Promise.all([
-    Question.aggregate([
-      { $match: filter },
-      { $addFields: { totalPool: { $add: ['$poolYes', '$poolNo'] } } },
-      { $sort: SORTS[sort] },
-      { $skip: (pageNum - 1) * pageSize },
-      { $limit: pageSize },
-      // Same as populate('creatorId', 'displayName'), inside the aggregation
-      {
-        $lookup: {
-          from: User.collection.collectionName,
-          localField: 'creatorId',
-          foreignField: '_id',
-          pipeline: [{ $project: { displayName: 1 } }],
-          as: 'creator',
-        },
-      },
-      { $set: { creator: { $first: '$creator' } } },
-    ]),
-    Question.countDocuments(filter),
-  ]);
+	const [results, total] = await Promise.all([
+		Question.aggregate([
+			{ $match: filter },
+			{ $addFields: { totalPool: { $add: ['$poolYes', '$poolNo'] } } },
+			{ $sort: SORTS[sort] },
+			{ $skip: (pageNum - 1) * pageSize },
+			{ $limit: pageSize },
+			// Same as populate('creatorId', 'displayName'), inside the aggregation
+			{
+				$lookup: {
+					from: User.collection.collectionName,
+					localField: 'creatorId',
+					foreignField: '_id',
+					pipeline: [{ $project: { displayName: 1 } }],
+					as: 'creator',
+				},
+			},
+			{ $set: { creator: { $first: '$creator' } } },
+		]),
+		Question.countDocuments(filter),
+	]);
 
-  return { results, page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) };
+	return { results, page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) };
+}
+
+// category is the only optional argument
+async function submitQuestion({ creatorId, title, description, category, closesAt }) {
+	let question;
+	try {
+		question = await Question.create({
+			creatorId: creatorId, title: title, description: description,
+			category: category ?? 'other', closesAt: closesAt
+		});
+	}
+	catch (error) {
+		throw mapMongooseInputError(error, 'INVALID_QUESTION');
+	}
+
+	return {
+		questionId: question._id, creatorId: question.creatorId, title: question.title,
+		description: question.description, category: question.category,
+		status: question.status, closesAt: question.closesAt, createdAt: question.createdAt
+	};
 }
 
 async function reportQuestion({ reporterId,  questionId, reason }) {
-  const report = await Report.create({ reporterId, questionId, reason });
-  return { id : report._id };
+	let report;
+	try {
+		report = await Report.create({ reporterId, questionId, reason });
+	}
+	catch (error) {
+		throw mapMongooseInputError(error, 'INVALID_REPORT');
+	}
+	return { id : report._id };
 }
 
 async function searchReportsWrapper({ userId, reporterId, questionId, reason }) {
-  const user = await User.findById(userId);
+	const user = await User.findById(userId);
 
-  if (!user) {
-    throw new Error('User not found');
-  }
+	if (!user) {
+		throw new Error('User not found');
+	}
 
-  if (user.role !== 'admin') {
-    throw new Error('User is not Admin');
-  }
+	if (user.role !== 'admin') {
+		throw new Error('User is not Admin');
+	}
 
-  return searchReports({ reporterId, questionId, reason });
+	return searchReports({ reporterId, questionId, reason });
 }
 
 async function searchReports({ reporterId, questionId, reason } = {}) {
-  const filter = {};
+	const filter = {};
 
-  // Exact match for reporter ID
-  if (reporterId?.trim()) {
-    if (!mongoose.isValidObjectId(reporterId)) {
-      throw new Error('Invalid reporter ID');
-    }
-    filter.reporterId = reporterId;
-  }
+	// Exact match for reporter ID
+	if (reporterId?.trim()) {
+		if (!mongoose.isValidObjectId(reporterId)) {
+			throw new Error('Invalid reporter ID');
+		}
+		filter.reporterId = reporterId;
+	}
 
-  // Exact match for question ID
-  if (questionId?.trim()) {
-    if (!mongoose.isValidObjectId(questionId)) {
-      throw new Error('Invalid question ID');
-    }
-    filter.questionId = questionId;
-  }
+	// Exact match for question ID
+	if (questionId?.trim()) {
+		if (!mongoose.isValidObjectId(questionId)) {
+			throw new Error('Invalid question ID');
+		}
+		filter.questionId = questionId;
+	}
 
-  // Partial, case-insensitive match for reason
-  if (reason?.trim()) {
-    const escapedReason = reason.trim().replace(
-      /[.*+?^${}()|[\]\\]/g,
-      '\\$&'
-    );
-    filter.reason = { $regex: escapedReason, $options: 'i' };
-  }
+	// Partial, case-insensitive match for reason
+	if (reason?.trim()) {
+		const escapedReason = reason.trim().replace(
+			/[.*+?^${}()|[\]\\]/g,
+			'\\$&'
+		);
+		filter.reason = { $regex: escapedReason, $options: 'i' };
+	}
 
-  return Report.find(filter).sort({ createdAt: 1 });
+	return Report.find(filter).sort({ createdAt: 1 });
 }
 
-
-
 async function resolveReport({ userId, reportId, killQuestion }) {
-  const user = await User.findById(userId);
+	const user = await User.findById(userId);
 
-  if (!user) {
-    throw new Error('User not found');
-  }
+	if (!user) {
+		throw new Error('User not found');
+	}
 
-  if (user.role !== 'admin') {
-    throw new Error('User is not Admin');
-  }
+	if (user.role !== 'admin') {
+		throw new Error('User is not Admin');
+	}
 
-  if (!mongoose.isValidObjectId(reportId)) {
-    throw new Error('Invalid report ID');
-  }
+	if (!mongoose.isValidObjectId(reportId)) {
+		throw new Error('Invalid report ID');
+	}
 
-  const report = await Report.findById(reportId);
+	const report = await Report.findById(reportId);
 
-  if (!report) {
-    throw new Error('Report not found');
-  }
+	if (!report) {
+		throw new Error('Report not found');
+	}
 
-  if (killQuestion) {
-    await cancelQuestion({ questionId : report.questionId });
-  }
+	if (killQuestion) {
+		await cancelQuestion({ questionId : report.questionId });
+	}
 
-  await report.deleteOne();
+	await report.deleteOne();
 
-  return { removedId: report._id };
+	return { removedId: report._id };
 }
 
 module.exports = { 
-  resolveQuestion, cancelQuestion, closeExpiredQuestions, searchQuestion, escapeRegex, 
-  reportQuestion, searchReports, searchReportsWrapper, resolveReport
+	resolveQuestion, cancelQuestion, closeExpiredQuestions, escapeRegex, searchQuestion,
+	submitQuestion, reportQuestion, searchReports, searchReportsWrapper, resolveReport
 };

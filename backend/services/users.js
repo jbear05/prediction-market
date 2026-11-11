@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
-const { AppError } = require('./errors');
+const { AppError, mapMongooseInputError } = require('./errors');
 const { withTransaction } = require('./withTransaction');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -69,10 +69,25 @@ async function getBalance({ userId }) {
 }
 
 async function createUser({ email, displayName, rawPassword }) {
-	const user = await User.create({
-		email, balance: 100, displayName, isVerified: false, lastDailyClaimAt:null,
-		passwordHash: await bcrypt.hash(rawPassword, 10), role:"user" 
-	});
+	if (typeof rawPassword !== 'string' || rawPassword.length === 0) {
+		throw new AppError(400, 'INVALID_USER', 'rawPassword must be a non-empty string');
+	}
+
+	const passwordHash = await bcrypt.hash(rawPassword, 10);
+	let user;
+	try {
+		user = await User.create({
+			email, balance: 100, displayName, isVerified: false,
+			lastDailyClaimAt: null, passwordHash, role: 'user'
+		});
+	}
+	catch (error) {
+		if (error?.code === 11000) {
+			throw new AppError(409, 'USER_ALREADY_EXISTS', 'Email or display name is already in use');
+		}
+		throw mapMongooseInputError(error, 'INVALID_USER');
+	}
+
 	const authcode = await createAuthCode(user._id, "verify");
 	await mailer.sendVerificationCode(user.email, authcode);
 	return { userId: user._id };

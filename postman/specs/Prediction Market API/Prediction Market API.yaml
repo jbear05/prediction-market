@@ -9,20 +9,44 @@ paths:
   /api/register:
     post:
       summary: Register User
-      responses: {}
+      responses:
+        '201':
+          description: User created and verification email sent.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId]
+                properties:
+                  userId:
+                    $ref: '#/components/schemas/ObjectId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: The email or display name is already in use.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email, displayName, rawPassword]
               properties:
                 email:
                   type: string
                   format: email
+                  maxLength: 254
                 displayName:
                   type: string
+                  minLength: 3
+                  maxLength: 30
+                  pattern: '^[A-Za-z0-9_]+$'
                 rawPassword:
                   type: string
             example:
@@ -32,14 +56,37 @@ paths:
   /api/login:
     post:
       summary: Login
-      responses: {}
+      responses:
+        '200':
+          description: Login succeeded and the user is verified.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, needVerification, token]
+                properties:
+                  userId:
+                    $ref: '#/components/schemas/ObjectId'
+                  needVerification:
+                    type: boolean
+                    enum: [false]
+                  token:
+                    type: string
+        '403':
+          description: The account must be verified before login.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email, rawPassword]
               properties:
                 email:
                   type: string
@@ -52,35 +99,57 @@ paths:
   /api/verify:
     post:
       summary: Verify User
-      responses: {}
+      responses:
+        '200':
+          description: Email verification succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: The email or verification code is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email, authCode]
               properties:
                 email:
                   type: string
                   format: email
                 authCode:
                   type: string
-                  format: color
+                  pattern: '^\d{6}$'
             example:
               email: user@example.com
               authCode: '123456'
   /api/verify/resend:
     post:
       summary: Resend Verification Code
-      responses: {}
+      responses:
+        '200':
+          description: The verification-code request was accepted. The response does not reveal whether the account exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email]
               properties:
                 email:
                   type: string
@@ -90,14 +159,22 @@ paths:
   /api/password/reset:
     post:
       summary: Get Password Reset Code
-      responses: {}
+      responses:
+        '200':
+          description: The password-reset request was accepted. The response does not reveal whether the account exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email]
               properties:
                 email:
                   type: string
@@ -107,14 +184,28 @@ paths:
   /api/password/update:
     post:
       summary: Reset Password
-      responses: {}
+      responses:
+        '200':
+          description: The password was updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: The email or reset code is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       tags:
         - Account Management
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email, newPassword, authCode]
               properties:
                 email:
                   type: string
@@ -123,7 +214,7 @@ paths:
                   type: string
                 authCode:
                   type: string
-                  format: color
+                  pattern: '^\d{6}$'
             example:
               email: user@example.com
               newPassword: newpassword123
@@ -131,19 +222,46 @@ paths:
   '/api/questions/{questionId}/resolve':
     post:
       summary: Resolve Question
-      responses: {}
+      responses:
+        '200':
+          description: The question was resolved and wagers were paid or refunded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [question, wagerCount, totalPaid, refunded]
+                properties:
+                  question:
+                    $ref: '#/components/schemas/QuestionDocument'
+                  wagerCount:
+                    type: integer
+                  totalPaid:
+                    type: integer
+                  refunded:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
       tags:
         - Admin Actions
       security:
         - BearerAuth: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [outcome]
               properties:
                 outcome:
                   type: string
+                  enum: [yes, no]
             example:
               outcome: 'yes'
     parameters:
@@ -156,16 +274,33 @@ paths:
   '/api/questions/{questionId}/cancel':
     post:
       summary: Cancel Question
-      responses: {}
+      responses:
+        '200':
+          description: The question was cancelled and its wagers were refunded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [question, wagerCount, totalRefunded]
+                properties:
+                  question:
+                    $ref: '#/components/schemas/QuestionDocument'
+                  wagerCount:
+                    type: integer
+                  totalRefunded:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
       tags:
         - Admin Actions
       security:
         - BearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
     parameters:
       - name: questionId
         in: path
@@ -192,20 +327,41 @@ paths:
           schema:
             type: string
           example: '{{reason}}'
-      responses: {}
       tags:
         - Admin Actions
       security:
         - BearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
+      responses:
+        '200':
+          description: Matching reports, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportDocument'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   '/api/reports/{reportId}/resolve':
     post:
       summary: Resolve Report
-      responses: {}
+      responses:
+        '200':
+          description: The report was removed after review.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [removedId]
+                properties:
+                  removedId:
+                    $ref: '#/components/schemas/ObjectId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
       tags:
         - Admin Actions
       security:
@@ -227,86 +383,52 @@ paths:
         schema:
           type: string
         example: '{{reportId}}'
-  '/api/questions/{questionId}/place-wager':
-    post:
-      summary: Place Wager
-      responses: {}
-      tags:
-        - User Actions
-      security:
-        - BearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                side:
-                  type: string
-                amount:
-                  type: integer
-            example:
-              side: 'yes'
-              amount: 50
-    parameters:
-      - name: questionId
-        in: path
-        required: true
-        schema:
-          type: string
-        example: '{{questionId}}'
-  /api/daily-claim:
-    post:
-      summary: Claim Daily Coins
-      responses: {}
-      tags:
-        - User Actions
-      security:
-        - BearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-    get:
-      summary: Daily Claim Status
-      responses: {}
-      tags:
-        - User Actions
-      security:
-        - BearerAuth: []
-  '/api/questions/{questionId}/report':
-    post:
-      summary: Report Question
-      responses: {}
-      tags:
-        - User Actions
-      security:
-        - BearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reason:
-                  type: string
-            example:
-              reason: This question is inappropriate.
-    parameters:
-      - name: questionId
-        in: path
-        required: true
-        schema:
-          type: string
-        example: '{{questionId}}'
-  /api/ping:
-    get:
-      summary: Ping
-      responses: {}
-      tags:
-        - User Actions
   /api/questions:
+    post:
+      summary: Submit Question
+      responses:
+        '201':
+          description: Question created. An omitted or null category defaults to other.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmittedQuestion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      tags:
+        - User Actions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, closesAt]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 150
+                description:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                category:
+                  type: string
+                  nullable: true
+                  enum: [sports, politics, tech, entertainment, campus, other]
+                  default: other
+                closesAt:
+                  type: string
+                  format: date-time
+            example:
+              title: Postman submit-question contract test
+              description: Created by the Postman request test.
+              closesAt: '2099-12-31T23:59:59.000Z'
     get:
       summary: Search Questions
       parameters:
@@ -319,36 +441,261 @@ paths:
           in: query
           schema:
             type: string
+            enum: [sports, politics, tech, entertainment, campus, other]
           example: '{{category}}'
         - name: status
           in: query
           schema:
             type: string
+            enum: [all, pending, open, rejected, closed, resolved, cancelled]
+            default: open
           example: '{{status}}'
         - name: sort
           in: query
           schema:
             type: string
+            enum: [newest, popular, closing]
+            default: newest
           example: '{{sort}}'
         - name: page
           in: query
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            default: 1
           example: '{{page}}'
         - name: limit
           in: query
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
           example: '{{limit}}'
-      responses: {}
+      responses:
+        '200':
+          description: A page of matching questions with pagination metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, page, limit, total, totalPages]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestionSearchResult'
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total:
+                    type: integer
+                  totalPages:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       tags:
         - User Actions
       security:
         - BearerAuth: []
+  '/api/questions/{questionId}/place-wager':
+    post:
+      summary: Place Wager
+      responses:
+        '201':
+          description: The wager was placed and the user's balance and question pool were updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [wager, balance, question]
+                properties:
+                  wager:
+                    $ref: '#/components/schemas/WagerDocument'
+                  balance:
+                    type: integer
+                  question:
+                    $ref: '#/components/schemas/QuestionDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+        - User Actions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [side, amount]
+              properties:
+                side:
+                  type: string
+                  enum: [yes, no]
+                amount:
+                  type: integer
+                  minimum: 1
+            example:
+              side: 'yes'
+              amount: 50
+    parameters:
+      - name: questionId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-fA-F0-9]{24}$'
+        example: '{{questionId}}'
+  /api/daily-claim:
+    post:
+      summary: Claim Daily Coins
+      responses:
+        '200':
+          description: Daily coins were claimed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [balance, amount, nextClaimAt]
+                properties:
+                  balance:
+                    type: integer
+                  amount:
+                    type: integer
+                  nextClaimAt:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+        - User Actions
+      security:
+        - BearerAuth: []
+    get:
+      summary: Daily Claim Status
+      responses:
+        '200':
+          description: The user's next eligible claim time.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [nextClaimAt, claimEligible]
+                properties:
+                  nextClaimAt:
+                    type: string
+                    format: date-time
+                  claimEligible:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+        - User Actions
+      security:
+        - BearerAuth: []
+  '/api/questions/{questionId}/report':
+    post:
+      summary: Report Question
+      responses:
+        '201':
+          description: Report created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id:
+                    $ref: '#/components/schemas/ObjectId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      tags:
+        - User Actions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            example:
+              reason: This question is inappropriate.
+    parameters:
+      - name: questionId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-fA-F0-9]{24}$'
+        example: '{{questionId}}'
+  /api/ping:
+    get:
+      summary: Ping
+      responses:
+        '200':
+          description: API health and database connection status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, db]
+                properties:
+                  ok:
+                    type: boolean
+                  db:
+                    type: string
+                    enum: [connected, disconnected]
+      tags:
+        - User Actions
   /api/balance:
     get:
       summary: Get Balance
-      responses: {}
+      responses:
+        '200':
+          description: The authenticated user's current balance.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [balance]
+                properties:
+                  balance:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
       tags:
         - User Actions
       security:
@@ -356,7 +703,19 @@ paths:
   /api/wagers:
     get:
       summary: Get Wagers
-      responses: {}
+      responses:
+        '200':
+          description: The authenticated user's wagers, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserWager'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       tags:
         - User Actions
       security:
@@ -366,3 +725,233 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
+  schemas:
+    ObjectId:
+      type: string
+      pattern: '^[a-fA-F0-9]{24}$'
+    ApiError:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    AuthenticationError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+    QuestionDocument:
+      type: object
+      required: [_id, creatorId, title, description, category, status, closesAt, createdAt]
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        creatorId:
+          $ref: '#/components/schemas/ObjectId'
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [sports, politics, tech, entertainment, campus, other]
+        status:
+          type: string
+          enum: [pending, open, rejected, closed, resolved, cancelled]
+        closesAt:
+          type: string
+          format: date-time
+        poolYes:
+          type: integer
+          minimum: 0
+        poolNo:
+          type: integer
+          minimum: 0
+        outcome:
+          type: string
+          nullable: true
+          enum: [yes, no]
+        createdAt:
+          type: string
+          format: date-time
+        __v:
+          type: integer
+    SubmittedQuestion:
+      type: object
+      required: [questionId, creatorId, title, description, category, status, closesAt, createdAt]
+      properties:
+        questionId:
+          $ref: '#/components/schemas/ObjectId'
+        creatorId:
+          $ref: '#/components/schemas/ObjectId'
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [sports, politics, tech, entertainment, campus, other]
+        status:
+          type: string
+          enum: [pending]
+        closesAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    QuestionSearchResult:
+      allOf:
+        - $ref: '#/components/schemas/QuestionDocument'
+        - type: object
+          required: [totalPool, creator]
+          properties:
+            totalPool:
+              type: integer
+              minimum: 0
+            creator:
+              type: object
+              required: [_id, displayName]
+              properties:
+                _id:
+                  $ref: '#/components/schemas/ObjectId'
+                displayName:
+                  type: string
+    ReportDocument:
+      type: object
+      required: [_id, reporterId, questionId, reason, createdAt]
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        reporterId:
+          $ref: '#/components/schemas/ObjectId'
+        questionId:
+          $ref: '#/components/schemas/ObjectId'
+        reason:
+          type: string
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+        __v:
+          type: integer
+    WagerDocument:
+      type: object
+      required: [_id, userId, questionId, side, amount, createdAt]
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        userId:
+          $ref: '#/components/schemas/ObjectId'
+        questionId:
+          $ref: '#/components/schemas/ObjectId'
+        side:
+          type: string
+          enum: [yes, no]
+        amount:
+          type: integer
+          minimum: 1
+        payout:
+          type: integer
+          nullable: true
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        __v:
+          type: integer
+    UserWager:
+      type: object
+      required: [question, wagerId, side, amount, payout, createdAt, outcome]
+      properties:
+        question:
+          type: object
+          required: [questionId, title, description, category, status, closesAt, poolYes, poolNo, outcome, createdAt]
+          properties:
+            questionId:
+              $ref: '#/components/schemas/ObjectId'
+            title:
+              type: string
+            description:
+              type: string
+            category:
+              type: string
+              enum: [sports, politics, tech, entertainment, campus, other]
+            status:
+              type: string
+              enum: [pending, open, rejected, closed, resolved, cancelled]
+            closesAt:
+              type: string
+              format: date-time
+            poolYes:
+              type: integer
+              minimum: 0
+            poolNo:
+              type: integer
+              minimum: 0
+            outcome:
+              type: string
+              nullable: true
+              enum: [yes, no]
+            createdAt:
+              type: string
+              format: date-time
+        wagerId:
+          $ref: '#/components/schemas/ObjectId'
+        side:
+          type: string
+          enum: [yes, no]
+        amount:
+          type: integer
+          minimum: 1
+        payout:
+          type: integer
+          nullable: true
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        outcome:
+          type: string
+          enum: [undecided, correct, incorrect]
+  responses:
+    BadRequest:
+      description: Request input is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: The request conflicts with the current resource state.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Authentication is required or the supplied credentials are invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthenticationError'
+    Forbidden:
+      description: The authenticated user does not have permission to perform this action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthenticationError'
