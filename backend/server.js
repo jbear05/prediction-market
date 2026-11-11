@@ -23,6 +23,7 @@ app.use(
 // Enforce that JWT is checked with middleware
 app.use('/api/daily-claim', requireAuth);
 app.use('/api/balance', requireAuth);
+app.use('/api/wagers', requireAuth);
 app.use('/api/questions', requireAuth);
 app.use('/api/reports', requireAuth);
 
@@ -38,6 +39,7 @@ app.use('/api/verify', require("./API/resendVerification.js"));
 app.use('/api/daily-claim', require('./API/dailyClaim.js'));
 app.use('/api/daily-claim', require('./API/nextClaim.js'));
 app.use('/api/balance', require('./API/getBalance.js'));
+app.use('/api/wagers', require('./API/getWagers.js'));
 app.use('/api/questions', require('./API/placeWager.js'));
 app.use('/api/questions', require('./API/reportQuestion.js'));
 app.use('/api/questions', require('./API/searchQuestion.js'));
