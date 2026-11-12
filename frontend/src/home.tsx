@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import "./home.css";
 import { useEffect, useRef, useState } from "react";
 import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers} 
@@ -6,6 +6,13 @@ from "./homeAPI";
 import type { Wager } from "./homeAPI";
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    sessionStorage.removeItem("authToken");
+    navigate("/login", { replace: true });
+  }
+  
   const createMarketDialog = useRef<HTMLDialogElement>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -143,7 +150,7 @@ export default function Home() {
             <button className="nav-link" type="button" disabled>
               Account
             </button>
-            <button className="nav-link" type="button" disabled>
+            <button className="nav-link" type="button" onClick={handleLogout}>
               Log out
             </button>
           </div>
