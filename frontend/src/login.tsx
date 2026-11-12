@@ -28,6 +28,8 @@ export default function Login() {
         // account exists but the email isn't verified yet
         navigate(`/verify-email?email=${encodeURIComponent(submittedEmail)}`);
       } else {
+        // keep the login token for authenticated API requests
+        sessionStorage.setItem("authToken", result.token);
         navigate("/");
       }
     } catch (error) {
