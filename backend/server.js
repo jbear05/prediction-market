@@ -10,18 +10,20 @@ app.use(express.json());
 // same domain, and the Flutter app isn't a browser, so neither needs this; it's for
 // local frontend development and the SwaggerHub "Try it out" button.)
 app.use(
-  cors({
-    origin: [
-      'https://predictionmarketucf.site',
-      'https://www.predictionmarketucf.site',
-      'http://localhost:5173',
-      'https://app.swaggerhub.com',
-    ],
-  })
+	cors({
+		origin: [
+			'https://predictionmarketucf.site',
+			'https://www.predictionmarketucf.site',
+			'http://localhost:5173',
+			'https://app.swaggerhub.com',
+		],
+	})
 );
 
 // Enforce that JWT is checked with middleware
 app.use('/api/daily-claim', requireAuth);
+app.use('/api/balance', requireAuth);
+app.use('/api/wagers', requireAuth);
 app.use('/api/questions', requireAuth);
 app.use('/api/reports', requireAuth);
 
@@ -35,28 +37,32 @@ app.use('/api/verify', require("./API/resendVerification.js"));
 
 // User action API
 app.use('/api/daily-claim', require('./API/dailyClaim.js'));
-app.use('/api/questions', require('./API/placeWager'));
+app.use('/api/daily-claim', require('./API/nextClaim.js'));
+app.use('/api/balance', require('./API/getBalance.js'));
+app.use('/api/wagers', require('./API/getWagers.js'));
+app.use('/api/questions', require('./API/placeWager.js'));
 app.use('/api/questions', require('./API/reportQuestion.js'));
 app.use('/api/questions', require('./API/searchQuestion.js'));
+app.use('/api/questions', require('./API/submitQuestion.js'));
 
 // Admin action API
-app.use('/api/questions', require('./API/resolveQuestion'));
-app.use('/api/questions', require('./API/cancelQuestion'));
+app.use('/api/questions', require('./API/resolveQuestion.js'));
+app.use('/api/questions', require('./API/cancelQuestion.js'));
 app.use('/api/reports', require('./API/searchReport.js'));
 app.use('/api/reports', require('./API/resolveReport.js'));
 
 // Confirms the API is up and whether MongoDB is connected
 app.get('/api/ping', (req, res) => {
-  const connected = mongoose.connection.readyState === 1;
-  res.json({ ok: true, db: connected ? 'connected' : 'disconnected' });
+	const connected = mongoose.connection.readyState === 1;
+	res.json({ ok: true, db: connected ? 'connected' : 'disconnected' });
 });
 
 const PORT = process.env.PORT || 5000;
 
 mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err.message));
+	.connect(process.env.MONGODB_URI)
+	.then(() => console.log('MongoDB connected'))
+	.catch((err) => console.error('MongoDB connection error:', err.message));
 
 // 127.0.0.1 = only reachable through nginx, never directly from the internet
 app.listen(PORT, '127.0.0.1', () => console.log(`API listening on port ${PORT}`));

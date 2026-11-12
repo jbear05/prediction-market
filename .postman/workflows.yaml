@@ -5,13 +5,13 @@
 # This file is declarative metadata and does not execute workflows by itself.
 workflows:
   syncSpecToCollection:
-    - spec: ../postman/specs/Prediction Market/Prediction Market.yaml
+    - spec: ../postman/specs/Prediction Market API/Prediction Market API.yaml
       collection: ../postman/collections/Prediction Market API
       options:
         syncExamples: false
         deleteOrphanedRequests: false
   syncCollectionToSpec:
-    - spec: ../postman/specs/Prediction Market/Prediction Market.yaml
+    - spec: ../postman/specs/Prediction Market API/Prediction Market API.yaml
       collection: ../postman/collections/Prediction Market API
       options:
         syncExamples: false
