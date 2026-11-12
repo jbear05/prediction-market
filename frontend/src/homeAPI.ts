@@ -49,3 +49,86 @@ export async function claimDailyCoins(): Promise<DailyClaimResult> {
     nextClaimAt: result.nextClaimAt,
   };
 }
+
+async function getHomeData(path: string, failureMessage: string): Promise<unknown> {
+  const token = sessionStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("Please log in to view your account.");
+  }
+
+  const response = await fetch(path, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (response.status === 401) {
+    sessionStorage.removeItem("authToken");
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  if (!response.ok) {
+    throw new Error(failureMessage);
+  }
+
+  return response.json();
+}
+
+export async function getBalance() {
+  const result = await getHomeData("/api/balance", "Unable to load your balance.");
+
+  if (!result || typeof result !== "object" ||
+      !("balance" in result) || typeof result.balance !== "number") {
+    throw new Error("The server returned an invalid balance.");
+  }
+
+  return result.balance;
+}
+
+export async function getDailyClaimStatus() {
+  const result = await getHomeData(
+    "/api/daily-claim",
+    "Unable to load your daily claim status.",
+  );
+
+  if (!result || typeof result !== "object" ||
+      !("nextClaimAt" in result) || typeof result.nextClaimAt !== "string" ||
+      !("claimEligible" in result) || typeof result.claimEligible !== "boolean") {
+    throw new Error("The server returned an invalid daily claim status.");
+  }
+
+  return {
+    nextClaimAt: result.nextClaimAt,
+    claimEligible: result.claimEligible,
+  };
+}
+
+
+export type Wager = {
+  wagerId: string;
+  side: "yes" | "no";
+  amount: number;
+  payout: number | null;
+  createdAt: string;
+  outcome: "undecided" | "correct" | "incorrect";
+  question: {
+    questionId: string;
+    title: string;
+    description: string;
+    category: string;
+    status: string;
+    closesAt: string;
+    poolYes: number;
+    poolNo: number;
+    outcome: "yes" | "no" | null;
+  };
+};
+
+export async function getWagers(): Promise<Wager[]> {
+  const result = await getHomeData("/api/wagers", "Unable to load your bets.");
+
+  if (!Array.isArray(result)) {
+    throw new Error("The server returned an invalid bets list.");
+  }
+
+  return result as Wager[];
+}
