@@ -165,6 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: displayNameController,
                     decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.person_outline),
                       labelText: 'Display Name',
                       filled: true,
                       fillColor: Colors.white,
@@ -198,6 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.email_outlined),
                       labelText: 'Email',
                       filled: true,
                       fillColor: Colors.white,
@@ -228,6 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
                         icon: Icon(
                           obscurePassword
@@ -263,6 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: obscureConfirmPassword,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
+                      prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
                         icon: Icon(
                           obscureConfirmPassword

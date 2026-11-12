@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String selectedCategory = 'All';
-  String selectedSection = 'Markets';
+  String selectedSection = 'Open Markets';
   String selectedBetFilter = 'Active';
   String selectedMarketFilter = 'Active';
 
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildNavigation() {
-    final sections = ['Markets', 'My Bets', 'My Markets'];
+    final sections = ['Open Markets', 'My Bets', 'My Markets'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 13),
             ],
           ),
         ),

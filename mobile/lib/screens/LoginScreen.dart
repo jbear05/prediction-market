@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:mobile_market_app/screens/ResetPasswordScreen.dart';
 import '../utils/GlobalData.dart';
 import '../utils/getAPI.dart';
 import 'package:http/http.dart' as http;
@@ -171,9 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     filled: true,
+                    prefixIcon: const Icon(Icons.email_outlined),
                     fillColor: Color.fromARGB(255, 245, 245, 245),
                     border: OutlineInputBorder(),
-                    hintText: 'Enter Your Email',
+                    hintText: 'Enter your email',
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -201,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: obscurePassword,
                   controller: passwordController,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
                         obscurePassword
@@ -217,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Color.fromARGB(255, 245, 245, 245),
                     border: OutlineInputBorder(),
-                    hintText: 'Enter Your Password',
+                    hintText: 'Enter your password',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -279,7 +281,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextButton(
                   onPressed: () {
-                    // let see
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>
+                      const ResetPasswordScreen(),)
+                    );
                   },
                   child: const Text(
                     'Forgot Password?',
