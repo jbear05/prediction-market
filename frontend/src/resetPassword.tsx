@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { resetPassword } from "./authAPI";
 import "./auth.css";
+import { useNavigate } from "react-router";
 
 // the reset request page will pass the submitted email
 type ResetPasswordProps = {
@@ -10,6 +11,7 @@ type ResetPasswordProps = {
 
 // dispays form for resetting user password
 export default function ResetPassword({ email }: ResetPasswordProps) {  
+  const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,6 +58,13 @@ export default function ResetPassword({ email }: ResetPasswordProps) {
         <p className="auth-description">
           Your password has been reset. You can now log in with your new password.
         </p>
+        <button
+          className="auth-submit"
+          type="button"
+          onClick={() => navigate("/login", { replace: true })}
+        >
+          Go to login
+        </button>
       </main>
     );
   }

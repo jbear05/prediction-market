@@ -1,18 +1,121 @@
-import { Link } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import "./home.css";
-import { useRef, useState } from "react";
-import { claimDailyCoins } from "./homeAPI";
+import { useEffect, useRef, useState } from "react";
+import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers} 
+from "./homeAPI";
+import type { Wager } from "./homeAPI";
+
 
 export default function Home() {
+  const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return;
+
+    const heading = document.getElementById(hash.slice(1));
+    heading?.scrollIntoView({ block: "start" });
+    heading?.focus({ preventScroll: true });
+  }, [hash]);
+  function handleLogout() {
+    sessionStorage.removeItem("authToken");
+    navigate("/login", { replace: true });
+  }
+  
   const createMarketDialog = useRef<HTMLDialogElement>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState("");
   const [claimMessage, setClaimMessage] = useState("");
 
+  const [claimStatus, setClaimStatus] = useState<{
+    nextClaimAt: string;
+    claimEligible: boolean;
+  } | null>(null);
+  const [isLoadingCoins, setIsLoadingCoins] = useState(true);
+  const [coinLoadError, setCoinLoadError] = useState("");
+
+  const claimUnavailable = claimStatus?.claimEligible === false;
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadCoins() {
+      const [balanceResult, statusResult] = await Promise.allSettled([
+        getBalance(),
+        getDailyClaimStatus(),
+      ]);
+
+      if (ignore) return;
+
+      if (balanceResult.status === "fulfilled") {
+        setBalance(balanceResult.value);
+      }
+
+      if (statusResult.status === "fulfilled") {
+        setClaimStatus(statusResult.value);
+      }
+
+      const failure =
+        balanceResult.status === "rejected" ? balanceResult : statusResult;
+
+      if (failure.status === "rejected") {
+        setCoinLoadError(
+          failure.reason instanceof Error
+            ? failure.reason.message
+            : "Unable to load your coin information.",
+        );
+      }
+
+      setIsLoadingCoins(false);
+    }
+
+    void loadCoins();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+  const [wagers, setWagers] = useState<Wager[]>([]);
+  const [betTab, setBetTab] = useState<"active" | "history">("active");
+  const [isLoadingWagers, setIsLoadingWagers] = useState(true);
+  const [wagerError, setWagerError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadWagers() {
+      try {
+        const result = await getWagers();
+        if (!ignore) setWagers(result);
+      } catch (error) {
+        if (!ignore) {
+          setWagerError(
+            error instanceof Error ? error.message : "Unable to load your bets.",
+          );
+        }
+      } finally {
+        if (!ignore) setIsLoadingWagers(false);
+      }
+    }
+
+    void loadWagers();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const visibleWagers = wagers.filter(({ question }) => {
+    const isHistorical =
+      question.status === "resolved" || question.status === "cancelled";
+
+    return betTab === "history" ? isHistorical : !isHistorical;
+  });
+
   // claim coins and show the balance returned by the server
   async function handleDailyClaim() {
-    if (isClaiming) return;
+    if (isClaiming || isLoadingCoins || claimUnavailable) return;
 
     setClaimError("");
     setClaimMessage("");
@@ -22,11 +125,12 @@ export default function Home() {
       const result = await claimDailyCoins();
 
       setBalance(result.balance);
-      setClaimMessage(
-        `You received ${result.amount} coins! Next claim: ${
-          new Date(result.nextClaimAt).toLocaleString()
-        }.`,
-      );
+      setCoinLoadError("");
+      setClaimStatus({
+        nextClaimAt: result.nextClaimAt,
+        claimEligible: false,
+      });
+      setClaimMessage(`You received ${result.amount} coins!`);
     } catch (error) {
       setClaimError(
         error instanceof Error
@@ -52,10 +156,10 @@ export default function Home() {
             <Link className="nav-link" to="/browse-markets">
               Browse Markets
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/account">
               Account
-            </button>
-            <button className="nav-link" type="button" disabled>
+            </Link>
+            <button className="nav-link" type="button" onClick={handleLogout}>
               Log out
             </button>
           </div>
@@ -77,17 +181,19 @@ export default function Home() {
               {balance === null ? "—" : `${balance} coins`}
             </p>
             <p>Fictional currency only</p>
-            {balance === null && (
-              <small>Balance will appear after a successful claim.</small>
-            )}
+            {isLoadingCoins && <small>Loading coin information…</small>}
+            {coinLoadError && <small role="alert">{coinLoadError}</small>}
           </div>
 
           <div className="daily-coins">
             <p>Daily coins</p>
+            {claimUnavailable && claimStatus && (
+              <p>Next claim: {new Date(claimStatus.nextClaimAt).toLocaleString()}</p>
+            )}
             <button
               type="button"
               onClick={handleDailyClaim}
-              disabled={isClaiming}
+              disabled={isClaiming || isLoadingCoins || claimUnavailable}
             >
               {isClaiming ? "Claiming..." : "Claim daily coins"}
             </button>
@@ -105,13 +211,21 @@ export default function Home() {
         )}
         {/* wagers will be loaded from the API later */}
         <section className="home-section" aria-labelledby="my-bets-heading">
-          <h2 id="my-bets-heading">My Bets</h2>
+          <h2 id="my-bets-heading" tabIndex={-1}>My Bets</h2>
 
           <div className="section-filters">
-            <button type="button" aria-pressed="true">
+            <button
+              type="button"
+              aria-pressed={betTab === "active"}
+              onClick={() => setBetTab("active")}
+            >
               Active
             </button>
-            <button type="button" aria-pressed="false" disabled>
+            <button
+              type="button"
+              aria-pressed={betTab === "history"}
+              onClick={() => setBetTab("history")}
+            >
               History
             </button>
           </div>
@@ -125,15 +239,46 @@ export default function Home() {
                   <th scope="col">Coins wagered</th>
                   <th scope="col">Wagering closes</th>
                   <th scope="col">Market status</th>
-                  <th scope="col">View market</th>
+                  <th scope="col">Payout</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={6}>
-                    Your bets will appear here once account data is connected.
-                  </td>
-                </tr>
+                {visibleWagers.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      {isLoadingWagers ? (
+                        <span role="status">Loading your bets…</span>
+                      ) : wagerError ? (
+                        <span role="alert">{wagerError}</span>
+                      ) : betTab === "active" ? (
+                        "You don’t have any active bets."
+                      ) : (
+                        "You don’t have any settled bets yet."
+                      )}
+                    </td>
+                  </tr>
+                )}
+
+                {visibleWagers.map((wager) => {
+                  const { question } = wager;
+                  const status =
+                    question.status === "open" && Date.parse(question.closesAt) <= Date.now()
+                      ? "closed"
+                      : question.status;
+
+                  return (
+                    <tr key={wager.wagerId}>
+                      <td>{question.title}</td>
+                      <td>{wager.side.toUpperCase()}</td>
+                      <td>{wager.amount.toLocaleString()} coins</td>
+                      <td>{new Date(question.closesAt).toLocaleString()}</td>
+                      <td>{status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                      <td>
+                        {wager.payout === null ? "Pending" : `${wager.payout.toLocaleString()} coins`}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -142,7 +287,7 @@ export default function Home() {
 
         {/* Questions created by this user */}
         <section className="home-section" aria-labelledby="my-markets-heading">
-        <h2 id="my-markets-heading">My Markets</h2>
+        <h2 id="my-markets-heading" tabIndex={-1}>My Markets</h2>
 
         <div className="market-controls">
           <div className="section-filters">

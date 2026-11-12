@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import "./home.css";
 import "./browseMarkets.css";
 import { useEffect, useState } from "react";
@@ -7,7 +7,12 @@ import type { Market, MarketSearchResult } from "./marketAPI";
 import MarketPopup from "./marketPopup";
 
 export default function BrowseMarkets() {
+  const navigate = useNavigate();
 
+  function handleLogout() {
+    sessionStorage.removeItem("authToken");
+    navigate("/login", { replace: true });
+  }
   const [marketData, setMarketData] = useState<MarketSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,10 +88,10 @@ export default function BrowseMarkets() {
             >
               Browse Markets
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/account">
               Account
-            </button>
-            <button className="nav-link" type="button" disabled>
+            </Link>
+            <button className="nav-link" type="button" onClick={handleLogout}>
               Log out
             </button>
           </div>
