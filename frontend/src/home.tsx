@@ -269,10 +269,20 @@ export default function Home() {
                   return (
                     <tr key={wager.wagerId}>
                       <td>{question.title}</td>
-                      <td>{wager.side.toUpperCase()}</td>
+                      <td>
+                        <span className={`bet-prediction bet-prediction-${wager.side}`}>
+                          {wager.side === "yes" ? "Yes" : "No"}
+                        </span>
+                      </td>
                       <td>{wager.amount.toLocaleString()} coins</td>
                       <td>{new Date(question.closesAt).toLocaleString()}</td>
-                      <td>{status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                      <td>
+                        <span className={`bet-status bet-status-${status}`}>
+                          {status === "closed"
+                            ? "Closed—awaiting result"
+                            : status.charAt(0).toUpperCase() + status.slice(1)}
+                        </span>
+                      </td>
                       <td>
                         {wager.payout === null ? "Pending" : `${wager.payout.toLocaleString()} coins`}
                       </td>
