@@ -132,3 +132,42 @@ export async function getWagers(): Promise<Wager[]> {
 
   return result as Wager[];
 }
+
+
+type NewMarket = {
+  title: string;
+  description: string;
+  closesAt: string;
+};
+
+export async function submitMarket(market: NewMarket): Promise<void> {
+  const token = sessionStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("Please log in to create a market.");
+  }
+
+  const response = await fetch("/api/questions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(market),
+  });
+
+  if (response.status === 401) {
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("authRole");
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  if (response.status !== 201) {
+    const error = await response.json().catch(() => null);
+    throw new Error(
+      typeof error?.message === "string"
+        ? error.message
+        : "Unable to submit your market. Please try again.",
+    );
+  }
+}

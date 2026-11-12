@@ -1,10 +1,10 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import "./home.css";
 import { useEffect, useRef, useState } from "react";
-import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers} 
+import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers, submitMarket} 
 from "./homeAPI";
 import type { Wager } from "./homeAPI";
-
+import type { FormEvent } from "react";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -23,6 +23,56 @@ export default function Home() {
   }
   
   const createMarketDialog = useRef<HTMLDialogElement>(null);
+  const [isSubmittingMarket, setIsSubmittingMarket] = useState(false);
+  const [marketError, setMarketError] = useState("");
+  const [marketMessage, setMarketMessage] = useState("");
+
+  async function handleSubmitMarket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmittingMarket) return;
+
+    const form = event.currentTarget;
+    const fields = new FormData(form);
+    const title = String(fields.get("question") ?? "").trim();
+    const description = String(fields.get("description") ?? "").trim();
+    const closingTime = new Date(String(fields.get("closingTime") ?? ""));
+
+    setMarketError("");
+    setMarketMessage("");
+
+    if (!title || !description) {
+      setMarketError("Enter a question and description.");
+      return;
+    }
+
+    if (Number.isNaN(closingTime.getTime()) || closingTime.getTime() <= Date.now()) {
+      setMarketError("Choose a closing date and time in the future.");
+      return;
+    }
+
+    setIsSubmittingMarket(true);
+
+    try {
+      await submitMarket({
+        title,
+        description,
+        closesAt: closingTime.toISOString(),
+      });
+
+      form.reset();
+      createMarketDialog.current?.close();
+      setMarketMessage("Your market was submitted for admin review.");
+    } catch (error) {
+      setMarketError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit your market. Please try again.",
+      );
+    } finally {
+      setIsSubmittingMarket(false);
+    }
+  }
+
   const [balance, setBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState("");
@@ -299,6 +349,10 @@ export default function Home() {
         <section className="home-section" aria-labelledby="my-markets-heading">
         <h2 id="my-markets-heading" tabIndex={-1}>My Markets</h2>
 
+        <div role="status">
+          {marketMessage && <p>{marketMessage}</p>}
+        </div>
+
         <div className="market-controls">
           <div className="section-filters">
             <button type="button" aria-pressed="true">
@@ -344,6 +398,10 @@ export default function Home() {
           ref={createMarketDialog}
           className="create-market-panel create-market-dialog"
           aria-labelledby="create-market-heading"
+          onCancel={(event) => {
+            if (isSubmittingMarket) event.preventDefault();
+          }}
+          onClose={() => setMarketError("")}
         >
           {/* close the popup */}
           <button
@@ -351,6 +409,7 @@ export default function Home() {
             type="button"
             aria-label="Close create market"
             onClick={() => createMarketDialog.current?.close()}
+            disabled={isSubmittingMarket}
           >
             ×
           </button>
@@ -360,7 +419,7 @@ export default function Home() {
             market will open for wagering.
           </p>
 
-          <form className="create-market-form" onSubmit={(event) => event.preventDefault()}>
+          <form className="create-market-form" onSubmit={handleSubmitMarket}>
             <label htmlFor="market-question">Question</label>
             <input
               id="market-question"
@@ -368,6 +427,7 @@ export default function Home() {
               type="text"
               placeholder="Enter a clear prediction question"
               required
+              maxLength={150}
             />
 
             <label htmlFor="market-description">
@@ -379,6 +439,7 @@ export default function Home() {
               rows={5}
               placeholder="Explain what the question means, how it will be resolved, and what evidence will determine the outcome."
               required
+              maxLength={2000}
             />
 
             <label htmlFor="market-closing-time">Closing date and time</label>
@@ -393,13 +454,12 @@ export default function Home() {
               Enter the closing time in your local timezone.
             </small>
 
-            <p>
-              Submitted questions appear in My Markets as Pending review.
-              Admin approval is required before wagering opens.
-            </p>
+            {marketError && (
+              <p className="auth-error" role="alert">{marketError}</p>
+            )}
 
-            <button type="submit" disabled>
-              Submit for review
+            <button type="submit" disabled={isSubmittingMarket}>
+              {isSubmittingMarket ? "Submitting…" : "Submit for review"}
             </button>
           </form>
         </dialog>
