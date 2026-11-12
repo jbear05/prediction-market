@@ -376,7 +376,7 @@
   font-weight: 600;
 }
 
-.create-market-form input,
+.create-market-form input:not([type="radio"]),
 .create-market-form textarea {
   box-sizing: border-box;
   width: 100%;
@@ -390,7 +390,7 @@
   line-height: 1.5;
 }
 
-.create-market-form input {
+.create-market-form input:not([type="radio"]) {
   min-height: 48px;
 }
 
@@ -399,9 +399,64 @@
   resize: vertical;
 }
 
-.create-market-form input + label,
+.create-market-form input:not([type="radio"]) + label,
 .create-market-form textarea + label {
   margin-top: 24px;
+}
+
+/* Category pills */
+.create-market-categories {
+  min-width: 0;
+  margin: 24px 0;
+  padding: 0;
+  border: 0;
+}
+
+.create-market-categories legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.create-market-category-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-market-category-options label {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+
+.create-market-category-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.create-market-category-options span {
+  display: block;
+  padding: 8px 16px;
+  border: 1px solid #808080;
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: #1b333e;
+}
+
+.create-market-category-options input:checked + span {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #ffffff;
+}
+
+.create-market-category-options input:focus-visible + span {
+  outline: 2px solid #1b333e;
+  outline-offset: 3px;
 }
 
 .create-market-form input::placeholder,

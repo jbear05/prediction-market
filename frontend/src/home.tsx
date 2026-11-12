@@ -45,6 +45,8 @@ export default function Home() {
       return;
     }
 
+    const category = String(fields.get("category") ?? "other");
+
     if (Number.isNaN(closingTime.getTime()) || closingTime.getTime() <= Date.now()) {
       setMarketError("Choose a closing date and time in the future.");
       return;
@@ -56,7 +58,8 @@ export default function Home() {
       await submitMarket({
         title,
         description,
-        closesAt: closingTime.toISOString(),
+        category,
+        closesAt: closingTime.toISOString()
       });
 
       form.reset();
@@ -441,6 +444,28 @@ export default function Home() {
               required
               maxLength={2000}
             />
+
+            <fieldset className="create-market-categories">
+              <legend>Category</legend>
+
+              <div className="create-market-category-options">
+                {[
+                  { value: "sports", label: "Sports" },
+                  { value: "campus", label: "UCF/Campus" },
+                  { value: "other", label: "Other" },
+                ].map(({ value, label }) => (
+                  <label key={value}>
+                    <input
+                      type="radio"
+                      name="category"
+                      value={value}
+                      defaultChecked={value === "other"}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
             <label htmlFor="market-closing-time">Closing date and time</label>
             <input

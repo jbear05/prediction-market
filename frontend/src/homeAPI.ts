@@ -138,6 +138,7 @@ type NewMarket = {
   title: string;
   description: string;
   closesAt: string;
+  category: string;
 };
 
 export async function submitMarket(market: NewMarket): Promise<void> {
