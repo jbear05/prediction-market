@@ -15,6 +15,7 @@ import ResetPassword from "./resetPassword";
 import VerifyEmail from "./verifyEmail";
 import Home from "./home";
 import BrowseMarkets from "./browseMarkets";
+import Account from "./account";
 
 // read email from the URL and pass it to the verification page
 function VerifyEmailRoute() {
@@ -61,6 +62,7 @@ createRoot(rootElement).render(
         <Route element={<RequireLogin />}>
           <Route path="/" element={<Home />} />
           <Route path="/browse-markets" element={<BrowseMarkets />} />
+          <Route path="/account" element={<Account />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

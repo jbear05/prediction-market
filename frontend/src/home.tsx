@@ -1,13 +1,22 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import "./home.css";
 import { useEffect, useRef, useState } from "react";
 import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers} 
 from "./homeAPI";
 import type { Wager } from "./homeAPI";
 
+
 export default function Home() {
   const navigate = useNavigate();
+  const { hash } = useLocation();
 
+  useEffect(() => {
+    if (!hash) return;
+
+    const heading = document.getElementById(hash.slice(1));
+    heading?.scrollIntoView({ block: "start" });
+    heading?.focus({ preventScroll: true });
+  }, [hash]);
   function handleLogout() {
     sessionStorage.removeItem("authToken");
     navigate("/login", { replace: true });
@@ -147,9 +156,9 @@ export default function Home() {
             <Link className="nav-link" to="/browse-markets">
               Browse Markets
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/account">
               Account
-            </button>
+            </Link>
             <button className="nav-link" type="button" onClick={handleLogout}>
               Log out
             </button>
@@ -202,7 +211,7 @@ export default function Home() {
         )}
         {/* wagers will be loaded from the API later */}
         <section className="home-section" aria-labelledby="my-bets-heading">
-          <h2 id="my-bets-heading">My Bets</h2>
+          <h2 id="my-bets-heading" tabIndex={-1}>My Bets</h2>
 
           <div className="section-filters">
             <button
@@ -278,7 +287,7 @@ export default function Home() {
 
         {/* Questions created by this user */}
         <section className="home-section" aria-labelledby="my-markets-heading">
-        <h2 id="my-markets-heading">My Markets</h2>
+        <h2 id="my-markets-heading" tabIndex={-1}>My Markets</h2>
 
         <div className="market-controls">
           <div className="section-filters">

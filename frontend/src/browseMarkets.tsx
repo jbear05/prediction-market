@@ -88,9 +88,9 @@ export default function BrowseMarkets() {
             >
               Browse Markets
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/account">
               Account
-            </button>
+            </Link>
             <button className="nav-link" type="button" onClick={handleLogout}>
               Log out
             </button>
