@@ -16,6 +16,7 @@ import VerifyEmail from "./verifyEmail";
 import Home from "./home";
 import BrowseMarkets from "./browseMarkets";
 import Account from "./account";
+import Admin from "./admin";
 
 // read email from the URL and pass it to the verification page
 function VerifyEmailRoute() {
@@ -49,6 +50,16 @@ function RequireLogin() {
 
   return <Navigate to="/login" replace />;
 }
+
+// admin pages: hides them from regular users (the API also rejects non-admins)
+function RequireAdmin() {
+  if (sessionStorage.getItem("authRole") === "admin") {
+    return <Outlet />;
+  }
+
+  return <Navigate to="/" replace />;
+}
+
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
@@ -63,6 +74,10 @@ createRoot(rootElement).render(
           <Route path="/" element={<Home />} />
           <Route path="/browse-markets" element={<BrowseMarkets />} />
           <Route path="/account" element={<Account />} />
+
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin" element={<Admin />} />
+          </Route>
         </Route>
 
         <Route path="/login" element={<Login />} />
