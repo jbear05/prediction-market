@@ -98,7 +98,8 @@ async function login({ email, rawPassword }) {
 	if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash))) {
 		throw new Error('Invalid Email or password')
 	}
-	return { userId: user._id, needVerification: !user.isVerified };
+	// role lets the frontend show admin pages; the API still checks it with requireAdmin
+	return { userId: user._id, role: user.role, needVerification: !user.isVerified };
 }
 
 async function passwordResetCode({ email }) {
