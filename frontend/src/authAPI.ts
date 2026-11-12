@@ -100,7 +100,8 @@ export async function login(email: string, password: string) {
       return {
         needVerification: true,
         userId: "",
-        token: ""
+        token: "",
+        role: "user"
       };
     }
     
@@ -123,9 +124,11 @@ export async function login(email: string, password: string) {
   }
  
   return {
-    needVerification: false, 
+    needVerification: false,
     userId: result.userId,
-    token: result.token
+    token: result.token,
+    // only used to show admin pages; the API checks the role on every admin request
+    role: result.role === "admin" ? "admin" : "user"
   };
 }
  

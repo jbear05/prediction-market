@@ -30,7 +30,9 @@ export default function Login() {
       } else {
         // keep the login token for authenticated API requests
         sessionStorage.setItem("authToken", result.token);
-        navigate("/");
+        sessionStorage.setItem("authRole", result.role);
+        // admins start on the review dashboard
+        navigate(result.role === "admin" ? "/admin" : "/");
       }
     } catch (error) {
       setError(

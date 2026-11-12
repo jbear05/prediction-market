@@ -1,0 +1,43 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/questions'
+order: 500
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Postman submit-question contract test",
+      "description": "Created by the Postman request test.",
+      "closesAt": "2099-12-31T23:59:59.000Z"
+    }
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 201 Created', () => {
+        pm.response.to.have.status(201);
+      });
+
+      pm.test('returns the documented question fields and defaults', () => {
+        const response = pm.response.json();
+        pm.expect(response.questionId).to.match(/^[a-f\d]{24}$/i);
+        pm.expect(response.creatorId).to.match(/^[a-f\d]{24}$/i);
+        pm.expect(response.title).to.eql('Postman submit-question contract test');
+        pm.expect(response.description).to.eql('Created by the Postman request test.');
+        pm.expect(response.category).to.eql('other');
+        pm.expect(response.status).to.eql('pending');
+        pm.expect(response.closesAt).to.eql('2099-12-31T23:59:59.000Z');
+        pm.expect(Number.isNaN(Date.parse(response.createdAt))).to.be.false;
+        ['poolYes', 'poolNo', 'outcome', '__v'].forEach((field) => {
+          pm.expect(response).not.to.have.property(field);
+        });
+
+        pm.environment.set('questionId', response.questionId);
+      });

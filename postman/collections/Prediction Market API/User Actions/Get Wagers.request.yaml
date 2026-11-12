@@ -1,0 +1,53 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/wagers'
+order: 7000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200 OK', () => {
+        pm.response.to.have.status(200);
+      });
+
+      const response = pm.response.json();
+      pm.test('returns an array of wagers', () => {
+        pm.expect(response).to.be.an('array');
+      });
+
+      if (Array.isArray(response)) {
+        pm.test('returns wager and question fields with valid outcomes', () => {
+          response.forEach((wager) => {
+            pm.expect(wager.wagerId).to.be.a('string').and.not.empty;
+            pm.expect(wager.side).to.be.oneOf(['yes', 'no']);
+            pm.expect(wager.amount).to.be.a('number').and.to.be.at.least(1);
+            pm.expect(Number.isInteger(wager.amount)).to.be.true;
+            pm.expect(wager.payout === null || (Number.isInteger(wager.payout) && wager.payout >= 0)).to.be.true;
+            pm.expect(Number.isNaN(Date.parse(wager.createdAt))).to.be.false;
+            pm.expect(wager.outcome).to.be.oneOf(['correct', 'incorrect', 'undecided']);
+
+            const question = wager.question;
+            pm.expect(question).to.be.an('object');
+            pm.expect(question.questionId).to.be.a('string').and.not.empty;
+            pm.expect(question.title).to.be.a('string');
+            pm.expect(question.description).to.be.a('string');
+            pm.expect(question.category).to.be.a('string');
+            pm.expect(question.status).to.be.a('string');
+            pm.expect(question.poolYes).to.be.a('number');
+            pm.expect(question.poolNo).to.be.a('number');
+            pm.expect(question.outcome === null || ['yes', 'no'].includes(question.outcome)).to.be.true;
+            pm.expect(Number.isNaN(Date.parse(question.closesAt))).to.be.false;
+            pm.expect(Number.isNaN(Date.parse(question.createdAt))).to.be.false;
+
+            let expectedOutcome = 'undecided';
+            if (question.status === 'resolved' && question.outcome) {
+              expectedOutcome = wager.side === question.outcome ? 'correct' : 'incorrect';
+            }
+            pm.expect(wager.outcome).to.eql(expectedOutcome);
+          });
+        });
+      }
