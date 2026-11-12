@@ -1,9 +1,42 @@
 import { Link } from "react-router";
 import "./home.css";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { claimDailyCoins } from "./homeAPI";
 
 export default function Home() {
   const createMarketDialog = useRef<HTMLDialogElement>(null);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimError, setClaimError] = useState("");
+  const [claimMessage, setClaimMessage] = useState("");
+
+  // claim coins and show the balance returned by the server
+  async function handleDailyClaim() {
+    if (isClaiming) return;
+
+    setClaimError("");
+    setClaimMessage("");
+    setIsClaiming(true);
+
+    try {
+      const result = await claimDailyCoins();
+
+      setBalance(result.balance);
+      setClaimMessage(
+        `You received ${result.amount} coins! Next claim: ${
+          new Date(result.nextClaimAt).toLocaleString()
+        }.`,
+      );
+    } catch (error) {
+      setClaimError(
+        error instanceof Error
+          ? error.message
+          : "Unable to claim daily coins. Please try again.",
+      );
+    } finally {
+      setIsClaiming(false);
+    }
+  }
   return (
     <>
       <header className="site-header">
@@ -16,9 +49,9 @@ export default function Home() {
             <Link className="nav-link active" to="/" aria-current="page">
               Home
             </Link>
-            <button className="nav-link" type="button" disabled>
+            <Link className="nav-link" to="/browse-markets">
               Browse Markets
-            </button>
+            </Link>
             <button className="nav-link" type="button" disabled>
               Account
             </button>
@@ -36,23 +69,40 @@ export default function Home() {
           <p>Your coins, predictions, and created markets in one place.</p>
         </header>
 
-        {/* sample balance until API is connected */}
+        {/* balance updates after a successful claim */}
         <section className="balance-panel" aria-labelledby="balance-heading">
           <div>
             <h2 id="balance-heading">Balance</h2>
-            <p className="balance-amount">100 coins</p>
+            <p className="balance-amount">
+              {balance === null ? "—" : `${balance} coins`}
+            </p>
             <p>Fictional currency only</p>
-            <small>Sample balance</small>
+            {balance === null && (
+              <small>Balance will appear after a successful claim.</small>
+            )}
           </div>
 
           <div className="daily-coins">
             <p>Daily coins</p>
-            <button type="button" disabled>
-              Claim daily coins
+            <button
+              type="button"
+              onClick={handleDailyClaim}
+              disabled={isClaiming}
+            >
+              {isClaiming ? "Claiming..." : "Claim daily coins"}
             </button>
           </div>
         </section>
 
+        {claimError && (
+          <p className="auth-error" role="alert">
+            {claimError}
+          </p>
+        )}
+
+        {claimMessage && (
+          <p role="status">{claimMessage}</p>
+        )}
         {/* wagers will be loaded from the API later */}
         <section className="home-section" aria-labelledby="my-bets-heading">
           <h2 id="my-bets-heading">My Bets</h2>

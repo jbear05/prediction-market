@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { verifyEmail, resendVerificationCode } from "./authAPI";
+import { useNavigate } from "react-router";
 import "./auth.css";
 
 // registration will pass the users email to this page.
@@ -10,6 +11,7 @@ type VerifyEmailProps = {
 
 // displays email verification form
 export default function VerifyEmail({ email }: VerifyEmailProps) {
+  const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -77,6 +79,15 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
         <p className="auth-description">
           Your email is verified. You can now log in.
         </p>
+
+        {/* return to login after successful verification */}
+        <button
+          className="auth-submit"
+          type="button"
+          onClick={() => navigate("/login")}
+        >
+          Go to login
+        </button>
       </main>
     );
   }

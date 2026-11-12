@@ -1,0 +1,564 @@
+/* search label and input row */
+.market-search {
+  margin-bottom: 20px;
+}
+
+.market-search > label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.market-search-row {
+  display: flex;
+  gap: 16px;
+}
+
+.market-search-row input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+}
+
+.market-search-row input::placeholder {
+  color: #52636b;
+}
+
+/* shared button appearance */
+.market-search-row button,
+.market-categories button {
+  min-height: 48px;
+  padding: 10px 20px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-search-row .market-search-button,
+.market-categories button[aria-pressed="true"] {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+/* categories on the left, sorting on the right */
+.market-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.market-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.market-sort {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.market-sort label {
+  color: #52636b;
+  font-size: 14px;
+}
+
+.market-sort select {
+  min-height: 48px;
+  min-width: 180px;
+  padding: 10px 16px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.market-sort select:focus-visible {
+  outline: 3px solid #1b333e;
+  outline-offset: 3px;
+}
+
+/* keep search usable on smaller screens */
+@media (max-width: 700px) {
+  .market-search-row {
+    flex-wrap: wrap;
+  }
+
+  .market-search-row input {
+    flex-basis: 100%;
+  }
+
+  .market-sort {
+    width: 100%;
+  }
+
+  .market-sort select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* result information above the cards */
+.market-results-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 20px;
+}
+
+.market-results-summary p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.market-results-summary p:last-child {
+  color: #52636b;
+}
+
+/* three columns on desktop */
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1000px) {
+  .market-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .market-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* white market cards */
+.market-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.market-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.market-category {
+  color: #355f3b;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.market-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background-color: #edf4ec;
+  color: #355f3b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* question and description */
+.market-card-title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.market-card-description {
+  margin: 0 0 24px;
+  color: #52636b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* keep the information and buttons aligned across cards */
+.market-card-info {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.market-card-info p {
+  margin: 0 0 8px;
+  color: #52636b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* total and YES/NO coin pools */
+.market-card-pools {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #d9dfd8;
+}
+
+.market-total,
+.market-pool-sides {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-total {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.market-total > span {
+  color: #52636b;
+}
+
+.market-pool-sides {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.market-pool-sides > span:first-child {
+  color: #355f3b;
+}
+
+/* equal-width prediction buttons */
+.market-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.market-card-actions button {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #1b333e;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-card-actions .market-yes {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+.market-details {
+  align-self: center;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #355f3b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* temporary disabled state until the popup is connected */
+.market-card-actions button:disabled,
+.market-details:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* centered page navigation */
+.market-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.market-pagination button {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-pagination button:hover:not(:disabled) {
+  border-color: #355f3b;
+  background-color: #edf4ec;
+}
+
+.market-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.market-pagination span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* centered market details popup */
+.market-popup {
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  max-width: 620px;
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font-family: Inter, sans-serif;
+}
+
+.market-popup::backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+/* close button at the top left */
+.market-popup-close {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  padding: 0;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.market-popup-close:hover {
+  background-color: #edf4ec;
+}
+
+/* question and supporting information */
+.market-popup h2 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.market-popup h3 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.market-popup p {
+  margin: 0 0 16px;
+  color: #52636b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* coin pool summary */
+.market-popup-pools {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #fffff8;
+}
+
+.market-popup-pools p {
+  margin: 0 0 8px;
+  color: #1b333e;
+}
+
+.market-popup-pools p:last-child {
+  margin-bottom: 0;
+}
+
+/* visible keyboard focus inside the popup */
+.market-popup button:focus-visible,
+.market-popup input:focus-visible {
+  outline: 3px solid #1b333e;
+  outline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .market-popup {
+    padding: 20px;
+  }
+}
+
+/* wager form inside the market popup */
+.market-wager-form {
+  margin-top: 24px;
+}
+
+.market-wager-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.market-wager-form legend {
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* prediction selection */
+.market-side-options {
+  display: flex;
+  gap: 12px;
+}
+
+.market-side-options button {
+  flex: 1;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #1b333e;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-side-options button[aria-pressed="true"] {
+  border-color: #355f3b;
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+.market-popup .market-side-message {
+  margin: 8px 0 24px;
+  font-size: 12px;
+}
+
+/* coin amount field */
+.market-wager-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.market-wager-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid #d9dfd8;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #1b333e;
+  font: inherit;
+}
+
+.market-wager-form small {
+  display: block;
+  margin-top: 8px;
+  color: #52636b;
+  font-size: 12px;
+}
+
+/* submission button */
+.market-confirm {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 7px;
+  background-color: #355f3b;
+  color: #fffff8;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-wager-form button:disabled,
+.market-wager-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.market-empty {
+  padding: 48px 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+  text-align: center;
+}
+
+.market-empty h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.market-empty p {
+  margin: 0 0 24px;
+  color: #52636b;
+  line-height: 1.6;
+}
+
+.market-empty .market-search-button {
+  min-height: 48px;
+  padding: 10px 24px;
+  border: 1px solid #355f3b;
+  border-radius: 7px;
+  background-color: #355f3b;
+  color: #fffff8;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
