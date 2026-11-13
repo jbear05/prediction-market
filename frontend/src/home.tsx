@@ -1,9 +1,9 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import "./home.css";
 import { useEffect, useRef, useState } from "react";
-import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers, submitMarket} 
+import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers, submitMarket, getMyMarkets } 
 from "./homeAPI";
-import type { Wager } from "./homeAPI";
+import type { Wager, MyMarket } from "./homeAPI";
 import type { FormEvent } from "react";
 
 export default function Home() {
@@ -26,6 +26,52 @@ export default function Home() {
   const [isSubmittingMarket, setIsSubmittingMarket] = useState(false);
   const [marketError, setMarketError] = useState("");
   const [marketMessage, setMarketMessage] = useState("");
+
+  const [myMarkets, setMyMarkets] = useState<MyMarket[]>([]);
+  const [isLoadingMyMarkets, setIsLoadingMyMarkets] = useState(true);
+  const [myMarketsError, setMyMarketsError] = useState("");
+  const [marketsRefresh, setMarketsRefresh] = useState(0);
+  const [marketTab, setMarketTab] = useState<"current" | "history">("current");
+
+  const visibleMarkets = myMarkets.filter(({ status }) => {
+    const isCurrent = status === "pending" || status === "open";
+    return marketTab === "current" ? isCurrent : !isCurrent;
+  });
+  useEffect(() => {
+    function refreshMyMarkets() {
+      setMarketsRefresh((count) => count + 1);
+    }
+
+    window.addEventListener("focus", refreshMyMarkets);
+    return () => window.removeEventListener("focus", refreshMyMarkets);
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadMyMarkets() {
+      setMyMarketsError("");
+
+      try {
+        const markets = await getMyMarkets();
+        if (!ignore) setMyMarkets(markets);
+      } catch (error) {
+        if (!ignore) {
+          setMyMarketsError(
+            error instanceof Error ? error.message : "Unable to load your markets.",
+          );
+        }
+      } finally {
+        if (!ignore) setIsLoadingMyMarkets(false);
+      }
+    }
+
+    void loadMyMarkets();
+
+    return () => {
+      ignore = true;
+    };
+  }, [marketsRefresh]);
 
   async function handleSubmitMarket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,6 +111,8 @@ export default function Home() {
       form.reset();
       createMarketDialog.current?.close();
       setMarketMessage("Your market was submitted for admin review.");
+      setMarketTab("current");
+      setMarketsRefresh((count) => count + 1);
     } catch (error) {
       setMarketError(
         error instanceof Error
@@ -358,10 +406,18 @@ export default function Home() {
 
         <div className="market-controls">
           <div className="section-filters">
-            <button type="button" aria-pressed="true">
+            <button
+              type="button"
+              aria-pressed={marketTab === "current"}
+              onClick={() => setMarketTab("current")}
+            >
               Current
             </button>
-            <button type="button" aria-pressed="false" disabled>
+            <button
+              type="button"
+              aria-pressed={marketTab === "history"}
+              onClick={() => setMarketTab("history")}
+            >
               History
             </button>
           </div>
@@ -382,15 +438,47 @@ export default function Home() {
                   <th scope="col">Question</th>
                   <th scope="col">Wagering closes</th>
                   <th scope="col">Status</th>
-                  <th scope="col">View market</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={4}>
-                    Your created markets will appear here once account data is connected.
-                  </td>
-                </tr>
+                {myMarketsError && (
+                  <tr>
+                    <td colSpan={3}>
+                      <span role="alert">{myMarketsError}</span>
+                    </td>
+                  </tr>
+                )}
+
+                {visibleMarkets.length === 0 && !myMarketsError && (
+                  <tr>
+                    <td colSpan={4}>
+                      {isLoadingMyMarkets ? "Loading your markets..." : marketTab === "current" ? "You don’t have any current markets." : "You don’t have any markets in your history yet."}
+                    </td>
+                  </tr>
+                )}
+
+                {visibleMarkets.map((market) => {
+                  const statusLabels: Record<string, string> = {
+                    pending: "Under Review",
+                    open: "Approved",
+                    rejected: "Rejected",
+                    closed: "Closed",
+                    resolved: "Resolved",
+                    cancelled: "Cancelled",
+                  };
+
+                  return (
+                    <tr key={market._id}>
+                      <td>{market.title}</td>
+                      <td>{new Date(market.closesAt).toLocaleString()}</td>
+                      <td>
+                        <span className={`bet-status bet-status-${market.status}`}>
+                          {statusLabels[market.status] ?? market.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -133,6 +133,42 @@ export async function getWagers(): Promise<Wager[]> {
   return result as Wager[];
 }
 
+export type MyMarket = {
+  _id: string;
+  title: string;
+  closesAt: string;
+  status: string;
+};
+
+export async function getMyMarkets(): Promise<MyMarket[]> {
+  const markets: MyMarket[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const result = await getHomeData(
+      `/api/questions?mine=true&status=all&limit=50&page=${page}`,
+      "Unable to load your markets.",
+    );
+
+    if (
+      !result ||
+      typeof result !== "object" ||
+      !("results" in result) ||
+      !Array.isArray(result.results) ||
+      !("totalPages" in result) ||
+      typeof result.totalPages !== "number"
+    ) {
+      throw new Error("The server returned an invalid markets list.");
+    }
+
+    markets.push(...(result.results as MyMarket[]));
+    totalPages = result.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return markets;
+}
 
 type NewMarket = {
   title: string;
