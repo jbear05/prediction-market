@@ -183,9 +183,13 @@ function escapeRegex(text) {
 
 // Search + browse. Every argument is optional. Returns one page of results plus
 // totals. Each result also has totalPool and creator: { _id, displayName }.
-async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20 } = {}) {
+async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20, creatorId } = {}) {
 	const filter = {};
 
+	if (creatorId) {
+		filter.creatorId = new mongoose.Types.ObjectId(creatorId);
+	}
+	
 	if (status !== 'all') {
 		if (!Question.STATUSES.includes(status)) {
 			throw new AppError(400, 'INVALID_STATUS', `status must be one of: all, ${Question.STATUSES.join(', ')}`);
