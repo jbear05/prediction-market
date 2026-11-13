@@ -274,7 +274,8 @@
 }
 
 /* My Bets table */
-[aria-labelledby="my-bets-heading"] .home-table th {
+[aria-labelledby="my-bets-heading"] .home-table th,
+[aria-labelledby="my-markets-heading"] .home-table th {
   padding: 12px 16px;
   background-color: #edf4ec;
 }
@@ -310,6 +311,12 @@
   border-color: #355f3b;
   background-color: #355f3b;
   color: #fffff8;
+}
+
+.bet-status-rejected {
+  border-color: #b42318;
+  background-color: #b42318;
+  color: #ffffff;
 }
 
 .home-section .create-market-button {
