@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const requireAuth = require('./middleware/requireAuth');
+const { closeExpiredQuestions } = require('./services/questions');
 const app = express();
 app.use(express.json());
 
@@ -64,7 +65,17 @@ const PORT = process.env.PORT || 5000;
 mongoose
 	.connect(process.env.MONGODB_URI)
 	.then(() => console.log('MongoDB connected'))
-	.catch((err) => console.error('MongoDB connection error:', err.message));
+	.catch((err) => {
+		// Exit so pm2 restarts the API and tries again, instead of running with no database
+		console.error('MongoDB connection error:', err.message);
+		process.exit(1);
+	});
+
+// Once a minute, mark open questions whose closing time has passed as closed
+setInterval(() => {
+	if (mongoose.connection.readyState !== 1) return;
+	closeExpiredQuestions().catch((err) => console.error('closeExpiredQuestions failed:', err.message));
+}, 60 * 1000);
 
 // 127.0.0.1 = only reachable through nginx, never directly from the internet
 app.listen(PORT, '127.0.0.1', () => console.log(`API listening on port ${PORT}`));
