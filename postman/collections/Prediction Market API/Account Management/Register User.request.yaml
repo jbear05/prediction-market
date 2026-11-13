@@ -13,3 +13,21 @@ body:
       "displayName": "John_Doe",
       "rawPassword": "password123"
     }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns a created or duplicate-registration response', () => {
+        pm.expect([201, 409]).to.include(pm.response.code);
+      });
+
+      pm.test('returns the documented response for the result', () => {
+        const response = pm.response.json();
+        if (pm.response.code === 201) {
+          pm.expect(response.userId).to.match(/^[a-f\d]{24}$/i);
+          pm.environment.set('userId', response.userId);
+        }
+        else {
+          pm.expect(response.error).to.eql('USER_ALREADY_EXISTS');
+          pm.expect(response.message).to.be.a('string').and.not.empty;
+        }
+      });

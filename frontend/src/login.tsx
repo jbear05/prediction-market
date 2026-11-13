@@ -28,7 +28,11 @@ export default function Login() {
         // account exists but the email isn't verified yet
         navigate(`/verify-email?email=${encodeURIComponent(submittedEmail)}`);
       } else {
-        navigate("/");
+        // keep the login token for authenticated API requests
+        sessionStorage.setItem("authToken", result.token);
+        sessionStorage.setItem("authRole", result.role);
+        // admins start on the review dashboard
+        navigate(result.role === "admin" ? "/admin" : "/");
       }
     } catch (error) {
       setError(

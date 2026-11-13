@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Question = require('../models/Question');
 const Wager = require('../models/Wager');
 const Transaction = require('../models/Transaction');
-const { placeWager } = require('../services/wagers');
+const { placeWager, getWagers } = require('../services/wagers');
 
 beforeAll(testDb.connect);
 afterEach(testDb.clear);
@@ -16,12 +16,13 @@ describe('placeWager', () => {
     const question = await makeQuestion(user);
 
     const result = await placeWager({ userId: user._id, questionId: question._id, side: 'yes', amount: 200 });
-
     expect(result.balance).toBe(300);
+
     const q = await Question.findById(question._id);
     expect(q.poolYes).toBe(200);
     expect(q.poolNo).toBe(0);
     expect(await Wager.countDocuments({ userId: user._id, amount: 200, side: 'yes' })).toBe(1);
+	
     const tx = await Transaction.findOne({ userId: user._id });
     expect(tx.type).toBe('wager');
     expect(tx.amount).toBe(-200);
@@ -44,6 +45,7 @@ describe('placeWager', () => {
   test('lets a user bet their entire balance', async () => {
     const user = await makeUser({ balance: 75 });
     const question = await makeQuestion(user);
+	
     const result = await placeWager({ userId: user._id, questionId: question._id, side: 'yes', amount: 75 });
     expect(result.balance).toBe(0);
   });
@@ -91,6 +93,7 @@ describe('placeWager', () => {
   test.each([0, -5, 1.5, '10', null])('refuses the amount %p', async (amount) => {
     const user = await makeUser();
     const question = await makeQuestion(user);
+
     await expect(
       placeWager({ userId: user._id, questionId: question._id, side: 'yes', amount })
     ).rejects.toMatchObject({ code: 'INVALID_AMOUNT' });
@@ -99,11 +102,47 @@ describe('placeWager', () => {
   test('refuses a side other than A or B, and a malformed id', async () => {
     const user = await makeUser();
     const question = await makeQuestion(user);
+
     await expect(
       placeWager({ userId: user._id, questionId: question._id, side: 'maybe', amount: 10 })
     ).rejects.toMatchObject({ code: 'INVALID_SIDE' });
+	
     await expect(
       placeWager({ userId: 'abc', questionId: question._id, side: 'yes', amount: 10 })
     ).rejects.toMatchObject({ code: 'INVALID_ID' });
+  });
+});
+
+describe('getWagers', () => {
+  test('reports whether each wager is correct, incorrect, or undecided', async () => {
+    const user = await makeUser();
+    const creator = await makeUser();
+    const correctQuestion = await makeQuestion(creator, { status: 'resolved', outcome: 'yes' });
+    const incorrectQuestion = await makeQuestion(creator, { status: 'resolved', outcome: 'no' });
+    const openQuestion = await makeQuestion(creator);
+    const cancelledQuestion = await makeQuestion(creator, { status: 'cancelled' });
+
+    await Wager.create([
+      { userId: user._id, questionId: correctQuestion._id, side: 'yes', amount: 10 },
+      { userId: user._id, questionId: incorrectQuestion._id, side: 'yes', amount: 10 },
+      { userId: user._id, questionId: openQuestion._id, side: 'no', amount: 10 },
+      { userId: user._id, questionId: cancelledQuestion._id, side: 'yes', amount: 10 },
+    ]);
+
+    const wagers = await getWagers({ userId: user._id });
+    expect(wagers).toHaveLength(4);
+    expect(wagers.map(({ question, outcome }) => [question.questionId.toString(), outcome])).toEqual(
+      expect.arrayContaining([
+        [correctQuestion._id.toString(), 'correct'],
+        [incorrectQuestion._id.toString(), 'incorrect'],
+        [openQuestion._id.toString(), 'undecided'],
+        [cancelledQuestion._id.toString(), 'undecided'],
+      ])
+    );
+  });
+
+  test('returns an empty list when the user has no wagers', async () => {
+    const user = await makeUser();
+    await expect(getWagers({ userId: user._id })).resolves.toEqual([]);
   });
 });
