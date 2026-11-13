@@ -1,0 +1,221 @@
+/* heading with the pending count on the right */
+.admin-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-heading p {
+  max-width: 560px;
+}
+
+.admin-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.admin-count strong {
+  color: #355f3b;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.admin-count span {
+  color: #52636b;
+  font-size: 14px;
+}
+
+/* confirmation after approving or rejecting */
+.admin-confirmation {
+  min-height: 24px;
+  margin: 0 0 16px;
+  color: #355f3b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-loading {
+  color: #52636b;
+}
+
+/* one card per question, stacked so long descriptions stay readable */
+.admin-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-card {
+  padding: 24px;
+  border: 1px solid #d9dfd8;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.admin-card .market-card-header {
+  margin-bottom: 12px;
+}
+
+.admin-card .market-card-title {
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+.admin-flag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background-color: #fdecea;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-label {
+  margin: 0 0 6px;
+  color: #52636b;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.admin-description {
+  max-width: 72ch;
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* submitter and dates */
+.admin-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0 0 20px;
+  padding-top: 16px;
+  border-top: 1px solid #edf0ec;
+}
+
+.admin-details dt {
+  margin-bottom: 2px;
+  color: #52636b;
+  font-size: 13px;
+}
+
+.admin-details dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* approve and reject buttons */
+.admin-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-actions button {
+  min-height: 44px;
+  padding: 10px 24px;
+  border: 2px solid #355f3b;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-approve {
+  background-color: #355f3b;
+  color: #fffff8;
+}
+
+.admin-approve:hover:not(:disabled) {
+  background-color: #2a4c2f;
+}
+
+.admin-actions .admin-reject {
+  border-color: #b42318;
+  background-color: #ffffff;
+  color: #b42318;
+}
+
+.admin-actions .admin-reject:hover:not(:disabled) {
+  background-color: #fdecea;
+}
+
+.admin-confirm .admin-reject {
+  background-color: #b42318;
+  color: #ffffff;
+}
+
+.admin-confirm .admin-reject:hover:not(:disabled) {
+  background-color: #8f1c13;
+}
+
+.admin-actions .admin-secondary {
+  border-color: #d9dfd8;
+  background-color: #ffffff;
+  color: #1b333e;
+}
+
+.admin-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-actions button:focus-visible {
+  outline: 3px solid #1b333e;
+  outline-offset: 3px;
+}
+
+.admin-confirm p,
+.admin-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 14px;
+}
+
+.admin-confirm p {
+  font-weight: 600;
+}
+
+.admin-hint {
+  color: #52636b;
+}
+
+.admin-card-error {
+  margin: 0 0 12px;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 700px) {
+  .admin-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-count {
+    align-items: flex-start;
+  }
+
+  .admin-actions button {
+    flex: 1;
+  }
+}

@@ -106,6 +106,58 @@ async function cancelQuestion({ questionId }) {
 	});
 }
 
+// After a failed pending-only update, works out why so the admin sees a useful error.
+async function explainNotPending(questionId) {
+	const question = await Question.findById(questionId).select('status closesAt');
+	if (!question) {
+		throw new AppError(404, 'QUESTION_NOT_FOUND', 'Question not found');
+	}
+	if (question.status !== 'pending') {
+		throw new AppError(409, 'QUESTION_NOT_PENDING', `Question was already reviewed (status: ${question.status})`);
+	}
+	return question;
+}
+
+// Admin approves a user-submitted question: pending -> open, so wagering starts.
+// A question whose closing time already passed can't be approved (it would open
+// already expired), so the admin should reject it instead.
+async function approveQuestion({ questionId }) {
+	if (!mongoose.isValidObjectId(questionId)) {
+		throw new AppError(400, 'INVALID_ID', 'Invalid question id');
+	}
+
+	// The status condition lives inside the update, so two admins clicking at the
+	// same moment can't both review the same question
+	const question = await Question.findOneAndUpdate(
+		{ _id: questionId, status: 'pending', closesAt: { $gt: new Date() } },
+		{ $set: { status: 'open' } },
+		{ returnDocument: 'after' }
+	);
+	if (question) return { question };
+
+	await explainNotPending(questionId);
+	throw new AppError(409, 'CLOSES_AT_PASSED', 'Closing time has already passed; reject this question instead');
+}
+
+// Admin rejects a user-submitted question: pending -> rejected. Pending questions
+// never take wagers, so there is nothing to refund.
+async function rejectQuestion({ questionId }) {
+	if (!mongoose.isValidObjectId(questionId)) {
+		throw new AppError(400, 'INVALID_ID', 'Invalid question id');
+	}
+
+	const question = await Question.findOneAndUpdate(
+		{ _id: questionId, status: 'pending' },
+		{ $set: { status: 'rejected' } },
+		{ returnDocument: 'after' }
+	);
+	if (question) return { question };
+
+	await explainNotPending(questionId);
+	// Only reachable if the question changed between the two queries
+	throw new AppError(409, 'QUESTION_NOT_PENDING', 'Question was already reviewed');
+}
+
 // Marks open questions whose closesAt has passed as closed. placeWager already
 // refuses late wagers on its own; this just keeps the status field honest.
 // Call it from a timer in server.js, e.g. setInterval(closeExpiredQuestions, 60 * 1000).
@@ -289,6 +341,6 @@ async function resolveReport({ userId, reportId, killQuestion }) {
 }
 
 module.exports = { 
-	resolveQuestion, cancelQuestion, closeExpiredQuestions, escapeRegex, searchQuestion,
+	resolveQuestion, cancelQuestion, approveQuestion, rejectQuestion, closeExpiredQuestions, escapeRegex, searchQuestion,
 	submitQuestion, reportQuestion, searchReports, searchReportsWrapper, resolveReport
 };

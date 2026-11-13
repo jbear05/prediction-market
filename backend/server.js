@@ -48,6 +48,8 @@ app.use('/api/questions', require('./API/submitQuestion.js'));
 // Admin action API
 app.use('/api/questions', require('./API/resolveQuestion.js'));
 app.use('/api/questions', require('./API/cancelQuestion.js'));
+app.use('/api/questions', require('./API/approveQuestion.js'));
+app.use('/api/questions', require('./API/rejectQuestion.js'));
 app.use('/api/reports', require('./API/searchReport.js'));
 app.use('/api/reports', require('./API/resolveReport.js'));
 

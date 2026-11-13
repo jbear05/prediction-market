@@ -8,7 +8,8 @@ const Transaction = require('../models/Transaction');
 const AuthCode = require('../models/AuthCode');
 const { placeWager } = require('../services/wagers');
 const {
-	resolveQuestion, cancelQuestion, closeExpiredQuestions, submitQuestion, reportQuestion, searchQuestion
+	resolveQuestion, cancelQuestion, approveQuestion, rejectQuestion, closeExpiredQuestions, submitQuestion,
+	reportQuestion, searchQuestion
 } = require('../services/questions');
 
 beforeAll(testDb.connect);
@@ -157,6 +158,94 @@ describe('cancelQuestion', () => {
 		await expect(
 			resolveQuestion({ questionId: question._id, outcome: 'yes' })
 		).rejects.toMatchObject({ code: 'QUESTION_NOT_RESOLVABLE' });
+	});
+});
+
+describe('approveQuestion', () => {
+	test('opens a pending question so it can take wagers', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator, { status: 'pending' });
+
+		const result = await approveQuestion({ questionId: question._id });
+
+		expect(result.question.status).toBe('open');
+		expect((await Question.findById(question._id)).status).toBe('open');
+		await expect(
+			placeWager({ userId: creator._id, questionId: question._id, side: 'yes', amount: 10 })
+		).resolves.toBeDefined();
+	});
+
+	test('refuses a question that was already reviewed', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator, { status: 'pending' });
+		await approveQuestion({ questionId: question._id });
+
+		await expect(approveQuestion({ questionId: question._id }))
+			.rejects.toMatchObject({ status: 409, code: 'QUESTION_NOT_PENDING' });
+	});
+
+	test('refuses a question whose closing time already passed', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator, {
+			status: 'pending',
+			closesAt: new Date(Date.now() - HOUR),
+		});
+
+		await expect(approveQuestion({ questionId: question._id }))
+			.rejects.toMatchObject({ status: 409, code: 'CLOSES_AT_PASSED' });
+		expect((await Question.findById(question._id)).status).toBe('pending');
+	});
+
+	test('reports a missing question and an invalid id', async () => {
+		await expect(approveQuestion({ questionId: '586978ad9d33c5fe44da9f6e' }))
+			.rejects.toMatchObject({ status: 404, code: 'QUESTION_NOT_FOUND' });
+		await expect(approveQuestion({ questionId: 'not-an-id' }))
+			.rejects.toMatchObject({ status: 400, code: 'INVALID_ID' });
+	});
+
+	test('only one of two simultaneous reviews succeeds', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator, { status: 'pending' });
+
+		const results = await Promise.allSettled([
+			approveQuestion({ questionId: question._id }),
+			rejectQuestion({ questionId: question._id }),
+		]);
+
+		expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+		expect(results.filter((result) => result.status === 'rejected')[0].reason)
+			.toMatchObject({ code: 'QUESTION_NOT_PENDING' });
+	});
+});
+
+describe('rejectQuestion', () => {
+	test('marks a pending question rejected, even after its closing time', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator, {
+			status: 'pending',
+			closesAt: new Date(Date.now() - HOUR),
+		});
+
+		const result = await rejectQuestion({ questionId: question._id });
+
+		expect(result.question.status).toBe('rejected');
+		expect((await Question.findById(question._id)).status).toBe('rejected');
+	});
+
+	test('refuses an open question; cancelQuestion handles those', async () => {
+		const creator = await makeUser();
+		const question = await makeQuestion(creator);
+
+		await expect(rejectQuestion({ questionId: question._id }))
+			.rejects.toMatchObject({ status: 409, code: 'QUESTION_NOT_PENDING' });
+		expect((await Question.findById(question._id)).status).toBe('open');
+	});
+
+	test('reports a missing question and an invalid id', async () => {
+		await expect(rejectQuestion({ questionId: '586978ad9d33c5fe44da9f6e' }))
+			.rejects.toMatchObject({ status: 404, code: 'QUESTION_NOT_FOUND' });
+		await expect(rejectQuestion({ questionId: 'not-an-id' }))
+			.rejects.toMatchObject({ status: 400, code: 'INVALID_ID' });
 	});
 });
 
