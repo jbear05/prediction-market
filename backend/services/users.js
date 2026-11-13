@@ -96,7 +96,7 @@ async function createUser({ email, displayName, rawPassword }) {
 async function login({ email, rawPassword }) {
 	const user = await User.findOne({ email }).select('+passwordHash');
 	if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash))) {
-		throw new Error('Invalid Email or password')
+		throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
 	}
 	// role lets the frontend show admin pages; the API still checks it with requireAdmin
 	return { userId: user._id, role: user.role, needVerification: !user.isVerified };

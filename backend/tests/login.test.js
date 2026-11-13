@@ -4,6 +4,7 @@ jest.mock('jsonwebtoken', () => ({ sign: jest.fn() }));
 const users = require('../services/users');
 const jwt = require('jsonwebtoken');
 const router = require('../API/login');
+const { AppError } = require('../services/errors');
 const { invokeRoute, makeJwtToken, testRoute } = require('./apiTestHelpers');
 
 const originalJwtSecret = process.env.JWT_SECRET;
@@ -33,6 +34,22 @@ testRoute({
 afterAll(() => {
 	if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
 	else process.env.JWT_SECRET = originalJwtSecret;
+});
+
+test('returns 401 for invalid credentials', async () => {
+	users.login.mockRejectedValue(
+		new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password')
+	);
+
+	const { res, next } = await invokeRoute(router, 'post', '/', { body: loginArgs });
+
+	expect(res.status).toHaveBeenCalledWith(401);
+	expect(res.json).toHaveBeenCalledWith({
+		error: 'INVALID_CREDENTIALS',
+		message: 'Invalid email or password'
+	});
+	expect(jwt.sign).not.toHaveBeenCalled();
+	expect(next).not.toHaveBeenCalled();
 });
 
 test('returns 403 for an account that still needs verification', async () => {
