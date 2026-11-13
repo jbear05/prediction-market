@@ -451,7 +451,7 @@ export default function Home() {
 
                 {visibleMarkets.length === 0 && !myMarketsError && (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={3}>
                       {isLoadingMyMarkets ? "Loading your markets..." : marketTab === "current" ? "You don’t have any current markets." : "You don’t have any markets in your history yet."}
                     </td>
                   </tr>
