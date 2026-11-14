@@ -9,17 +9,47 @@ jest.mock('../services/mailer', () => ({
 
 const testDb = require('./testDb');
 const { makeUser } = require('./factories');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const authCodes = require('../services/authCodes');
 const mailer = require('../services/mailer');
 const {
-	dailyClaim, nextClaim, getBalance, createUser, DAILY_CLAIM_AMOUNT, DAILY_CLAIM_INTERVAL_MS
+	dailyClaim, nextClaim, getBalance, createUser, login,
+	DAILY_CLAIM_AMOUNT, DAILY_CLAIM_INTERVAL_MS
 } = require('../services/users');
 
 beforeAll(testDb.connect);
 afterEach(testDb.clear);
 afterAll(testDb.disconnect);
+
+describe('login', () => {
+	test('returns the same 401 error for an unknown email', async () => {
+		await expect(login({
+			email: 'unknown@example.com',
+			rawPassword: 'wrong-password'
+		})).rejects.toMatchObject({
+			status: 401,
+			code: 'INVALID_CREDENTIALS',
+			message: 'Invalid email or password'
+		});
+	});
+
+	test('returns the same 401 error for an incorrect password', async () => {
+		const user = await makeUser({
+			passwordHash: await bcrypt.hash('correct-password', 10)
+		});
+
+		await expect(login({
+			email: user.email,
+			rawPassword: 'wrong-password'
+		})).rejects.toMatchObject({
+			status: 401,
+			code: 'INVALID_CREDENTIALS',
+			message: 'Invalid email or password',
+		});
+	});
+});
 
 describe('dailyClaim', () => {
 	test('first claim adds the daily coins and a ledger row', async () => {

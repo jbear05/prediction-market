@@ -30,3 +30,27 @@ scripts:
 
       pm.environment.set('jwt', response.token);
       pm.environment.set('userId', response.userId);
+
+      pm.sendRequest({
+        url: pm.variables.replaceIn('{{baseUrl}}/api/login'),
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          mode: 'raw',
+          raw: JSON.stringify({
+            email: 'unknown@example.invalid',
+            rawPassword: 'incorrect-password',
+          }),
+        },
+      }, (error, invalidResponse) => {
+        pm.test('returns 401 for invalid login credentials', () => {
+          pm.expect(error).to.eql(null);
+          pm.expect(invalidResponse.code).to.eql(401);
+          pm.expect(invalidResponse.json()).to.eql({
+            error: 'INVALID_CREDENTIALS',
+            message: 'Invalid email or password',
+          });
+        });
+      });
