@@ -72,6 +72,15 @@ paths:
                     enum: [false]
                   token:
                     type: string
+        '401':
+          description: The email or password is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                error: INVALID_CREDENTIALS
+                message: Invalid email or password
         '403':
           description: The account must be verified before login.
           content:
@@ -264,6 +273,82 @@ paths:
                   enum: [yes, no]
             example:
               outcome: 'yes'
+    parameters:
+      - name: questionId
+        in: path
+        required: true
+        schema:
+          type: string
+        example: '{{questionId}}'
+  '/api/questions/{questionId}/approve':
+    post:
+      summary: Approve Question
+      description: Approves a pending user-submitted question and opens it for wagering. Questions whose closing time has passed cannot be approved.
+      responses:
+        '200':
+          description: The pending question was approved and is now open.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [question]
+                properties:
+                  question:
+                    $ref: '#/components/schemas/QuestionDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: The question was already reviewed or its closing time has passed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+        - Admin Actions
+      security:
+        - BearerAuth: []
+    parameters:
+      - name: questionId
+        in: path
+        required: true
+        schema:
+          type: string
+        example: '{{questionId}}'
+  '/api/questions/{questionId}/reject':
+    post:
+      summary: Reject Question
+      description: Rejects a pending user-submitted question. A rejected question cannot be reopened.
+      responses:
+        '200':
+          description: The pending question was rejected.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [question]
+                properties:
+                  question:
+                    $ref: '#/components/schemas/QuestionDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+        - Admin Actions
+      security:
+        - BearerAuth: []
     parameters:
       - name: questionId
         in: path
