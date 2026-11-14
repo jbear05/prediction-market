@@ -9,7 +9,7 @@ const AuthCode = require('../models/AuthCode');
 const { placeWager } = require('../services/wagers');
 const {
 	resolveQuestion, cancelQuestion, approveQuestion, rejectQuestion, closeExpiredQuestions, submitQuestion,
-	reportQuestion, searchQuestion
+	reportQuestion, searchQuestion, searchReports, searchReportsWrapper, resolveReport
 } = require('../services/questions');
 
 beforeAll(testDb.connect);
@@ -363,11 +363,39 @@ describe('searchQuestion', () => {
 	});
 
 	test('filters by category and status', async () => {
+		const admin = await makeUser({ role: 'admin' });
 		expect((await searchQuestion({ category: 'tech' })).total).toBe(1);
-		expect((await searchQuestion({ status: 'pending' })).total).toBe(1);
-		expect((await searchQuestion({ status: 'all' })).total).toBe(4);
+		expect((await searchQuestion({ status: 'pending', viewerId: admin._id })).total).toBe(1);
+		expect((await searchQuestion({ status: 'all', viewerId: admin._id })).total).toBe(4);
 		await expect(searchQuestion({ category: 'cooking' })).rejects.toMatchObject({ code: 'INVALID_CATEGORY' });
 		await expect(searchQuestion({ status: 'bogus' })).rejects.toMatchObject({ code: 'INVALID_STATUS' });
+	});
+
+	test('regular users cannot browse other users\' pending or rejected questions', async () => {
+		const other = await makeUser();
+		await makeQuestion(user, { title: 'Rejected question', status: 'rejected' });
+		await makeQuestion(user, { title: 'Resolved question', status: 'resolved', outcome: 'yes' });
+
+		await expect(searchQuestion({ status: 'pending', viewerId: other._id }))
+			.rejects.toMatchObject({ status: 403, code: 'STATUS_NOT_ALLOWED' });
+		await expect(searchQuestion({ status: 'rejected', viewerId: other._id }))
+			.rejects.toMatchObject({ status: 403, code: 'STATUS_NOT_ALLOWED' });
+
+		// "all" quietly leaves out the unreviewed ones
+		const { results } = await searchQuestion({ status: 'all', viewerId: other._id });
+		expect(results.map((r) => r.status).sort()).toEqual(['open', 'open', 'open', 'resolved']);
+
+		// Asking for "someone else's questions" by passing their id as creatorId doesn't help either
+		const theirs = await searchQuestion({ status: 'all', creatorId: user._id, viewerId: other._id });
+		expect(theirs.results.map((r) => r.status)).not.toContain('pending');
+		expect(theirs.results.map((r) => r.status)).not.toContain('rejected');
+	});
+
+	test('users see all of their own questions, pending and rejected included', async () => {
+		await makeQuestion(user, { title: 'Rejected question', status: 'rejected' });
+		const { total } = await searchQuestion({ status: 'all', creatorId: user._id, viewerId: user._id });
+		expect(total).toBe(5);
+		expect((await searchQuestion({ status: 'pending', creatorId: user._id, viewerId: user._id })).total).toBe(1);
 	});
 
 	test('sorts by popularity and paginates', async () => {
@@ -389,6 +417,30 @@ describe('searchQuestion', () => {
 		const result = await searchQuestion({ page: -3, limit: 1000 });
 		expect(result.page).toBe(1);
 		expect(result.limit).toBe(50);
+	});
+});
+
+describe('report admin helpers', () => {
+	test('bad ids and missing reports are 400/404 errors, not server errors', async () => {
+		const admin = await makeUser({ role: 'admin' });
+		const missingId = '64b000000000000000000000';
+
+		await expect(searchReports({ reporterId: 'nope' })).rejects.toMatchObject({ status: 400, code: 'INVALID_ID' });
+		await expect(searchReports({ questionId: 'nope' })).rejects.toMatchObject({ status: 400, code: 'INVALID_ID' });
+		await expect(resolveReport({ userId: admin._id, reportId: 'nope' }))
+			.rejects.toMatchObject({ status: 400, code: 'INVALID_ID' });
+		await expect(resolveReport({ userId: admin._id, reportId: missingId }))
+			.rejects.toMatchObject({ status: 404, code: 'REPORT_NOT_FOUND' });
+	});
+
+	test('non-admins and unknown users get 403/404', async () => {
+		const user = await makeUser();
+		const missingId = '64b000000000000000000000';
+
+		await expect(searchReportsWrapper({ userId: user._id })).rejects.toMatchObject({ status: 403, code: 'ADMIN_REQUIRED' });
+		await expect(searchReportsWrapper({ userId: missingId })).rejects.toMatchObject({ status: 404, code: 'USER_NOT_FOUND' });
+		await expect(resolveReport({ userId: user._id, reportId: missingId }))
+			.rejects.toMatchObject({ status: 403, code: 'ADMIN_REQUIRED' });
 	});
 });
 

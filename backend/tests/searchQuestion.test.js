@@ -20,7 +20,7 @@ testRoute({
 	path: '/',
 	request: { query },
 	service: questions.searchQuestion,
-	args: query,
+	args: { ...query, viewerId: '98ae7a88404f4fcdee142747' },
 });
 
 test('forwards absent optional query parameters as undefined', async () => {
@@ -35,5 +35,18 @@ test('forwards absent optional query parameters as undefined', async () => {
 		sort: undefined,
 		page: undefined,
 		limit: undefined,
+		viewerId: '98ae7a88404f4fcdee142747',
 	});
+});
+
+test('mine=true limits the search to the logged-in user\'s own questions', async () => {
+	questions.searchQuestion.mockResolvedValue([]);
+
+	await invokeRoute(router, 'get', '/', { query: { mine: 'true', status: 'all' } });
+
+	expect(questions.searchQuestion).toHaveBeenCalledWith(expect.objectContaining({
+		status: 'all',
+		creatorId: '98ae7a88404f4fcdee142747',
+		viewerId: '98ae7a88404f4fcdee142747',
+	}));
 });
