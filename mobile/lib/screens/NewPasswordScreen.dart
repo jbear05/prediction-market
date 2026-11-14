@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -235,6 +234,9 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a new password.';
+                      }
+                      if (value.length < 8) {
+                        return 'Password must be at least 8 characters.';
                       }
                       return null;
                     },

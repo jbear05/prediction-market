@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_market_app/routes/routes.dart';
+import 'package:prediction_market/routes/routes.dart';
 
 void main() {
   runApp(MyApp());
