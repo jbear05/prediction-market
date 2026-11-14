@@ -1,4 +1,5 @@
-import { Link, useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import SiteNav from "./siteNav";
 import "./home.css";
 import { useEffect, useRef, useState } from "react";
 import { claimDailyCoins, getBalance, getDailyClaimStatus, getWagers, submitMarket, getMyMarkets } 
@@ -7,7 +8,6 @@ import type { Wager, MyMarket } from "./homeAPI";
 import type { FormEvent } from "react";
 
 export default function Home() {
-  const navigate = useNavigate();
   const { hash } = useLocation();
 
   useEffect(() => {
@@ -17,10 +17,6 @@ export default function Home() {
     heading?.scrollIntoView({ block: "start" });
     heading?.focus({ preventScroll: true });
   }, [hash]);
-  function handleLogout() {
-    sessionStorage.removeItem("authToken");
-    navigate("/login", { replace: true });
-  }
   
   const createMarketDialog = useRef<HTMLDialogElement>(null);
   const [isSubmittingMarket, setIsSubmittingMarket] = useState(false);
@@ -244,28 +240,7 @@ export default function Home() {
   }
   return (
     <>
-      <header className="site-header">
-        <nav className="site-nav" aria-label="Main navigation">
-          <Link className="site-brand" to="/">
-            Prediction Market
-          </Link>
-
-          <div className="site-nav-links">
-            <Link className="nav-link active" to="/" aria-current="page">
-              Home
-            </Link>
-            <Link className="nav-link" to="/browse-markets">
-              Browse Markets
-            </Link>
-            <Link className="nav-link" to="/account">
-              Account
-            </Link>
-            <button className="nav-link" type="button" onClick={handleLogout}>
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
+      <SiteNav />
 
       <main className="home-page">
         {/* page heading */}
