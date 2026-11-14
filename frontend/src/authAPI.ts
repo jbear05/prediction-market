@@ -1,3 +1,15 @@
+// the API answers 429 when a rate limit is hit; show its message instead of a wrong guess
+async function throwIfRateLimited(response: Response) {
+  if (response.status === 429) {
+    const result = await response.json().catch(() => null);
+    throw new Error(
+      typeof result?.message === "string"
+        ? result.message
+        : "Too many attempts. Please wait a few minutes and try again.",
+    );
+  }
+}
+
 // send email and verification code to API
 export async function verifyEmail(email: string, authCode: string) {
   const response = await fetch("/api/verify", {
@@ -8,9 +20,11 @@ export async function verifyEmail(email: string, authCode: string) {
     body: JSON.stringify({email, authCode}),
   });
 
+  await throwIfRateLimited(response);
+
   if (!response.ok) {
     throw new Error(
-      response.status === 400 ? "This code is invalid or has expired." : "Unable to verify your email. Please try again.",);
+      response.status === 400 ? "This code is invalid or has expired. After 5 wrong tries, request a new code." : "Unable to verify your email. Please try again.",);
   }
 
   const result = await response.json();
@@ -29,6 +43,8 @@ export async function resendVerificationCode(email: string) {
     },
     body: JSON.stringify({email}),
   });
+
+  await throwIfRateLimited(response);
 
   if (!response.ok) {
     throw new Error("Unable to request a new code. Please try again.");
@@ -51,6 +67,8 @@ export async function requestPasswordResetCode(email: string) {
     body: JSON.stringify({email}),
   });
 
+  await throwIfRateLimited(response);
+
   if (!response.ok) {
     throw new Error("Unable to request a reset code. Please try again.");
   }
@@ -72,8 +90,19 @@ export async function resetPassword(email: string, authCode: string, newPassword
     body: JSON.stringify({email, authCode, newPassword}),
   });
 
+  await throwIfRateLimited(response);
+
+  if (response.status === 400) {
+    const result = await response.json().catch(() => null);
+    throw new Error(
+      result?.error === "INVALID_PASSWORD"
+        ? "Password must be at least 8 characters."
+        : "This code is invalid or has expired. After 5 wrong tries, request a new code.",
+    );
+  }
+
   if (!response.ok) {
-    throw new Error(response.status === 400 ? "This code is invalid or has expired." : "Unable to reset your password. Please try again.");
+    throw new Error("Unable to reset your password. Please try again.");
   }
 
   const result = await response.json();
@@ -91,6 +120,8 @@ export async function login(email: string, password: string) {
     },    
     body: JSON.stringify({ email: email.trim(), rawPassword: password }),
   });
+
+  await throwIfRateLimited(response);
  
   // unverified accounts recieve HTTP 403
   if(response.status === 403) {
@@ -144,6 +175,8 @@ export async function register(
     },
     body: JSON.stringify({ email: email.trim(), displayName, rawPassword: password }),
   });
+
+  await throwIfRateLimited(response);
  
   if (!response.ok) {
     throw new Error(

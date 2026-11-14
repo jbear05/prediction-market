@@ -1,13 +1,26 @@
-/* heading with the pending count on the right */
-.admin-heading {
+/* switch between reviewing submissions and resolving markets */
+.admin-tabs {
+  margin-bottom: 32px;
+}
+
+/* section heading with the queue count on the right */
+.admin-section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+  margin-bottom: 16px;
 }
 
-.admin-heading p {
+.admin-section-heading h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.admin-section-heading p {
   max-width: 560px;
+  margin: 0;
+  color: #52636b;
 }
 
 .admin-count {
@@ -77,6 +90,40 @@
   background-color: #fdecea;
   color: #b42318;
   font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-flag-neutral {
+  background-color: #edf0ec;
+  color: #1b333e;
+}
+
+/* YES/NO split of the pool on a closed market */
+.admin-pools {
+  margin: 0 0 20px;
+}
+
+.admin-pool-bar {
+  height: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 5px;
+  background-color: #c9d3cd;
+}
+
+.admin-pool-yes {
+  display: block;
+  height: 100%;
+  background-color: #355f3b;
+}
+
+.admin-pools p {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 24px;
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -206,7 +253,7 @@
 }
 
 @media (max-width: 700px) {
-  .admin-heading {
+  .admin-section-heading {
     flex-direction: column;
     align-items: flex-start;
   }
