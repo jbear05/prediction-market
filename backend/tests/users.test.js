@@ -151,6 +151,15 @@ describe('createUser', () => {
 		})).rejects.toMatchObject({ status: 400, code: 'INVALID_USER' });
 	});
 
+	test('rejects a password shorter than 8 characters', async () => {
+		await expect(createUser({
+			email: 'person@example.com',
+			displayName: 'Valid_Name',
+			rawPassword: 'short',
+		})).rejects.toMatchObject({ status: 400, code: 'INVALID_USER' });
+		expect(await User.countDocuments({ email: 'person@example.com' })).toBe(0);
+	});
+
 	test.each([
 		['email', { email: 'existing@example.com', displayName: 'Another_Name' }],
 		['display name', { email: 'another@example.com', displayName: 'Existing_Name' }],
@@ -161,5 +170,33 @@ describe('createUser', () => {
 			...fields,
 			rawPassword: 'password',
 		})).rejects.toMatchObject({ status: 409, code: 'USER_ALREADY_EXISTS' });
+	});
+});
+const { finishPasswordReset } = require('../services/users');
+
+describe('finishPasswordReset', () => {
+	test('refuses a new password shorter than 8 characters without using up the code', async () => {
+		await makeUser({ email: 'reset-me@example.com' });
+		authCodes.verifyAuthCode.mockClear();
+
+		await expect(finishPasswordReset({
+			email: 'reset-me@example.com',
+			newPassword: 'short',
+			authCode: '123456',
+		})).rejects.toMatchObject({ status: 400, code: 'INVALID_PASSWORD' });
+		expect(authCodes.verifyAuthCode).not.toHaveBeenCalled();
+	});
+
+	test('sets the new password when the code is right', async () => {
+		const user = await makeUser({ email: 'reset-me@example.com' });
+		authCodes.verifyAuthCode.mockResolvedValueOnce(true);
+
+		await expect(finishPasswordReset({
+			email: 'reset-me@example.com',
+			newPassword: 'long-enough',
+			authCode: '123456',
+		})).resolves.toEqual({ success: true });
+		const saved = await User.findById(user._id).select('+passwordHash');
+		expect(saved.passwordHash).not.toBe('not-a-real-hash');
 	});
 });
