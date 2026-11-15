@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:mobile_market_app/screens/ResetPasswordScreen.dart';
+import 'package:prediction_market/screens/ResetPasswordScreen.dart';
 import '../utils/GlobalData.dart';
 import '../utils/getAPI.dart';
 import 'package:http/http.dart' as http;
@@ -298,7 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const Text(
-                  "Don't have an account?",
+                  "New here?",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
