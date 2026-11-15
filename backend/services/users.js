@@ -11,6 +11,12 @@ const { verifyAuthCode } = require('./authCodes.js');
 
 const DAILY_CLAIM_AMOUNT = 100;
 const DAILY_CLAIM_INTERVAL_MS = 24 * 60 * 60 * 1000;
+// Same rule as the register and reset password pages
+const MIN_PASSWORD_LENGTH = 8;
+
+function isValidPassword(password) {
+	return typeof password === 'string' && password.length >= MIN_PASSWORD_LENGTH;
+}
 
 // Gives the user their daily coins, at most once every 24 hours. The
 // lastDailyClaimAt condition lives inside the update itself, so two clicks at
@@ -69,8 +75,8 @@ async function getBalance({ userId }) {
 }
 
 async function createUser({ email, displayName, rawPassword }) {
-	if (typeof rawPassword !== 'string' || rawPassword.length === 0) {
-		throw new AppError(400, 'INVALID_USER', 'rawPassword must be a non-empty string');
+	if (!isValidPassword(rawPassword)) {
+		throw new AppError(400, 'INVALID_USER', `rawPassword must be at least ${MIN_PASSWORD_LENGTH} characters`);
 	}
 
 	const passwordHash = await bcrypt.hash(rawPassword, 10);
@@ -96,7 +102,7 @@ async function createUser({ email, displayName, rawPassword }) {
 async function login({ email, rawPassword }) {
 	const user = await User.findOne({ email }).select('+passwordHash');
 	if(!user || !(await bcrypt.compare(rawPassword, user.passwordHash))) {
-		throw new Error('Invalid Email or password')
+		throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
 	}
 	// role lets the frontend show admin pages; the API still checks it with requireAdmin
 	return { userId: user._id, role: user.role, needVerification: !user.isVerified };
@@ -112,6 +118,10 @@ async function passwordResetCode({ email }) {
 }
 
 async function finishPasswordReset({ email, newPassword, authCode }) {
+	// Checked before the code, so a too-short password doesn't use up the code
+	if (!isValidPassword(newPassword)) {
+		throw new AppError(400, 'INVALID_PASSWORD', `newPassword must be at least ${MIN_PASSWORD_LENGTH} characters`);
+	}
 	const user = await User.findOne({ email });
 	if (user && await verifyAuthCode(user._id, "reset" ,authCode)) {
 		user.passwordHash = await bcrypt.hash(newPassword, 10);
@@ -143,5 +153,5 @@ async function newVerCode({ email }) {
 module.exports = {
 	dailyClaim, nextClaim, getBalance, createUser, login,
 	passwordResetCode, finishPasswordReset, verifyUser,
-	newVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS
+	newVerCode,  DAILY_CLAIM_AMOUNT,  DAILY_CLAIM_INTERVAL_MS, MIN_PASSWORD_LENGTH
 };

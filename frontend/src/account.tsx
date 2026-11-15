@@ -1,32 +1,13 @@
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
+import SiteNav from "./siteNav";
 import "./home.css";
 
 export default function Account() {
-  const navigate = useNavigate();
 
-  function handleLogout() {
-    sessionStorage.removeItem("authToken");
-    navigate("/login", { replace: true });
-  }
 
   return (
     <>
-      <header className="site-header">
-        <nav className="site-nav" aria-label="Main navigation">
-          <Link className="site-brand" to="/">Prediction Market</Link>
-
-          <div className="site-nav-links">
-            <Link className="nav-link" to="/">Home</Link>
-            <Link className="nav-link" to="/browse-markets">Browse Markets</Link>
-            <Link className="nav-link active" to="/account" aria-current="page">
-              Account
-            </Link>
-            <button className="nav-link" type="button" onClick={handleLogout}>
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
+      <SiteNav />
 
       <main className="home-page">
         <header className="home-heading">

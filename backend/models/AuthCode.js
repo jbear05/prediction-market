@@ -9,6 +9,8 @@ const authCodeSchema = new mongoose.Schema(
     purpose: { type: String, enum: ['verify', 'reset'], required: true },
     codeHash: { type: String, required: true },
     expiresAt: { type: Date, required: true },
+    // Guesses checked against this code so far. Capped so a 6-digit code can't be brute-forced
+    attempts: { type: Number, default: 0 },
   },
   { collection: 'auth_codes', timestamps: { updatedAt: false } }
 );

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router";
+import SiteNav from "./siteNav";
 import "./home.css";
 import "./browseMarkets.css";
 import { useEffect, useState } from "react";
@@ -7,12 +7,7 @@ import type { Market, MarketSearchResult } from "./marketAPI";
 import MarketPopup from "./marketPopup";
 
 export default function BrowseMarkets() {
-  const navigate = useNavigate();
 
-  function handleLogout() {
-    sessionStorage.removeItem("authToken");
-    navigate("/login", { replace: true });
-  }
   const [marketData, setMarketData] = useState<MarketSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,33 +65,7 @@ export default function BrowseMarkets() {
 
   return (
     <>
-      {/* shared navigation */}
-      <header className="site-header">
-        <nav className="site-nav" aria-label="Main navigation">
-          <Link className="site-brand" to="/">
-            Prediction Market
-          </Link>
-
-          <div className="site-nav-links">
-            <Link className="nav-link" to="/">
-              Home
-            </Link>
-            <Link
-              className="nav-link active"
-              to="/browse-markets"
-              aria-current="page"
-            >
-              Browse Markets
-            </Link>
-            <Link className="nav-link" to="/account">
-              Account
-            </Link>
-            <button className="nav-link" type="button" onClick={handleLogout}>
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
+      <SiteNav />
 
       <main className="home-page">
         <header className="home-heading">

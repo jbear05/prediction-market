@@ -7,14 +7,22 @@ const { AppError } = require('../services/errors');
 // GET /api/questions?q=...&category=...&status=...&sort=...&page=...&limit=...
 router.get('/', async (req, res, next) => {
   try {
-    const result = await searchQuestion({
+    const filters = {
       q: req.query.q,
       category: req.query.category,
       status: req.query.status,
       sort: req.query.sort,
       page: req.query.page,
-      limit: req.query.limit
-    });
+      limit: req.query.limit,
+      viewerId: req.user.id
+    };
+
+    // Your own questions, in any status (pending/rejected included)
+    if (req.query.mine === 'true') {
+      filters.creatorId = req.user.id;
+    }
+
+    const result = await searchQuestion(filters);
     res.status(200).json(result);
   }
   catch (error) {

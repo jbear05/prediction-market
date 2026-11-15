@@ -4,6 +4,9 @@ import { resetPassword } from "./authAPI";
 import "./auth.css";
 import { useNavigate } from "react-router";
 
+// same rule as the register page and the backend
+const MIN_PASSWORD_LENGTH = 8;
+
 // the reset request page will pass the submitted email
 type ResetPasswordProps = {
   email: string;
@@ -26,6 +29,11 @@ export default function ResetPassword({ email }: ResetPasswordProps) {
 
     if (!email.trim()) {
       setError("Email is missing. Please request a new code.");
+      return;
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
@@ -103,6 +111,7 @@ export default function ResetPassword({ email }: ResetPasswordProps) {
           name="password"
           type="password"
           autoComplete="new-password"
+          minLength={MIN_PASSWORD_LENGTH}
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}

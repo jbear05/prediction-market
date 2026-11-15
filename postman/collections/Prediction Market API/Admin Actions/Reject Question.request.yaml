@@ -1,0 +1,26 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/questions/{{questionId}}/reject'
+order: 4000
+pathVariables:
+  - key: questionId
+    value: '{{questionId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200 OK', () => {
+        pm.response.to.have.status(200);
+      });
+
+      pm.test('transitions the pending question to rejected', () => {
+        const body = pm.response.json();
+        pm.expect(body).to.have.property('question');
+        pm.expect(body.question._id).to.eql(pm.environment.get('questionId'));
+        pm.expect(body.question.status).to.eql('rejected');
+        pm.expect(body.question.outcome).to.eql(null);
+      });
