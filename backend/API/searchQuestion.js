@@ -13,9 +13,11 @@ router.get('/', async (req, res, next) => {
       status: req.query.status,
       sort: req.query.sort,
       page: req.query.page,
-      limit: req.query.limit
+      limit: req.query.limit,
+      viewerId: req.user.id
     };
 
+    // Your own questions, in any status (pending/rejected included)
     if (req.query.mine === 'true') {
       filters.creatorId = req.user.id;
     }

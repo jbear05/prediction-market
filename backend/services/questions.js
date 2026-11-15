@@ -183,16 +183,38 @@ function escapeRegex(text) {
 
 // Search + browse. Every argument is optional. Returns one page of results plus
 // totals. Each result also has totalPool and creator: { _id, displayName }.
-async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20, creatorId } = {}) {
+// Questions that haven't passed admin review. Only admins, and the user who
+// submitted them, may see these; everyone else sees only reviewed questions.
+const UNREVIEWED_STATUSES = ['pending', 'rejected'];
+
+// viewerId is the logged-in user. creatorId limits the search to one user's own
+// questions ("My Markets"), which may include their pending/rejected ones.
+async function searchQuestion({ q, category, status = 'open', sort = 'newest', page = 1, limit = 20, creatorId, viewerId } = {}) {
 	const filter = {};
 
 	if (creatorId) {
 		filter.creatorId = new mongoose.Types.ObjectId(creatorId);
 	}
-	
-	if (status !== 'all') {
-		if (!Question.STATUSES.includes(status)) {
-			throw new AppError(400, 'INVALID_STATUS', `status must be one of: all, ${Question.STATUSES.join(', ')}`);
+
+	if (status !== 'all' && !Question.STATUSES.includes(status)) {
+		throw new AppError(400, 'INVALID_STATUS', `status must be one of: all, ${Question.STATUSES.join(', ')}`);
+	}
+
+	// Searching your own questions can show any status; otherwise unreviewed
+	// questions need an admin. The role is read from the database, so it's only
+	// looked up when the request actually asks for unreviewed questions.
+	const wantsUnreviewed = status === 'all' || UNREVIEWED_STATUSES.includes(status);
+	let canSeeUnreviewed = Boolean(creatorId) && String(creatorId) === String(viewerId);
+	if (wantsUnreviewed && !canSeeUnreviewed && mongoose.isValidObjectId(viewerId)) {
+		const viewer = await User.findById(viewerId).select('role');
+		canSeeUnreviewed = viewer?.role === 'admin';
+	}
+
+	if (status === 'all') {
+		if (!canSeeUnreviewed) filter.status = { $nin: UNREVIEWED_STATUSES };
+	} else {
+		if (UNREVIEWED_STATUSES.includes(status) && !canSeeUnreviewed) {
+			throw new AppError(403, 'STATUS_NOT_ALLOWED', 'Only admins can browse pending or rejected questions');
 		}
 		filter.status = status;
 	}
@@ -273,11 +295,11 @@ async function searchReportsWrapper({ userId, reporterId, questionId, reason }) 
 	const user = await User.findById(userId);
 
 	if (!user) {
-		throw new Error('User not found');
+		throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
 	}
 
 	if (user.role !== 'admin') {
-		throw new Error('User is not Admin');
+		throw new AppError(403, 'ADMIN_REQUIRED', 'Admin access required');
 	}
 
 	return searchReports({ reporterId, questionId, reason });
@@ -289,7 +311,7 @@ async function searchReports({ reporterId, questionId, reason } = {}) {
 	// Exact match for reporter ID
 	if (reporterId?.trim()) {
 		if (!mongoose.isValidObjectId(reporterId)) {
-			throw new Error('Invalid reporter ID');
+			throw new AppError(400, 'INVALID_ID', 'Invalid reporter ID');
 		}
 		filter.reporterId = reporterId;
 	}
@@ -297,7 +319,7 @@ async function searchReports({ reporterId, questionId, reason } = {}) {
 	// Exact match for question ID
 	if (questionId?.trim()) {
 		if (!mongoose.isValidObjectId(questionId)) {
-			throw new Error('Invalid question ID');
+			throw new AppError(400, 'INVALID_ID', 'Invalid question ID');
 		}
 		filter.questionId = questionId;
 	}
@@ -318,21 +340,21 @@ async function resolveReport({ userId, reportId, killQuestion }) {
 	const user = await User.findById(userId);
 
 	if (!user) {
-		throw new Error('User not found');
+		throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
 	}
 
 	if (user.role !== 'admin') {
-		throw new Error('User is not Admin');
+		throw new AppError(403, 'ADMIN_REQUIRED', 'Admin access required');
 	}
 
 	if (!mongoose.isValidObjectId(reportId)) {
-		throw new Error('Invalid report ID');
+		throw new AppError(400, 'INVALID_ID', 'Invalid report ID');
 	}
 
 	const report = await Report.findById(reportId);
 
 	if (!report) {
-		throw new Error('Report not found');
+		throw new AppError(404, 'REPORT_NOT_FOUND', 'Report not found');
 	}
 
 	if (killQuestion) {
