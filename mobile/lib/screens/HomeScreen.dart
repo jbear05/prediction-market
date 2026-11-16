@@ -23,10 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> categories = [
     'All',
     'Sports',
-    'Politics',
-    'Tech',
-    'Entertainment',
-    'Campus',
+    'UCF/Campus',
     'Other',
   ];
 
@@ -112,18 +109,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final data = decodeMap(response.body);
 
-        bool available = data['claimEligible'] == true;
+        final bool available = data['claimEligible'] == true;
 
         final next = data['nextClaimAt'];
+        String formattedNextClaim = '';
 
         if (next != null) {
           final nextDate = DateTime.tryParse(next.toString());
 
           if (nextDate != null) {
-            available = DateTime.now().isAfter(nextDate) ||
-                DateTime.now().isAtSameMomentAs(nextDate);
-
-            nextClaimAt = nextDate.toLocal().toString();
+            formattedNextClaim = nextDate.toLocal().toString();
           }
         }
 
@@ -131,7 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
         setState(() {
           claimEligible = available;
+          nextClaimAt = formattedNextClaim;
         });
+      }
+      else {
+        debugPrint(
+          'Daily claim status failed: '
+              '${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       debugPrint('Daily claim status error: $e');
@@ -223,7 +225,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       if (selectedCategory != 'All') {
-        parameters['category'] = selectedCategory.toLowerCase();
+        parameters['category'] = selectedCategory == 'UCF/Campus'
+            ? 'campus'
+            : selectedCategory.toLowerCase();
       }
 
       final uri = Uri.parse('$baseUrl/api/questions')
@@ -807,20 +811,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text('Sports'),
                         ),
                         DropdownMenuItem(
-                          value: 'politics',
-                          child: Text('Politics'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'tech',
-                          child: Text('Tech'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'entertainment',
-                          child: Text('Entertainment'),
-                        ),
-                        DropdownMenuItem(
                           value: 'campus',
-                          child: Text('Campus'),
+                          child: Text('UCF/Campus'),
                         ),
                         DropdownMenuItem(
                           value: 'other',
